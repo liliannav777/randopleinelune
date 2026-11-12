@@ -1,0 +1,33 @@
+# Configuration Supabase CLI (développement local : `supabase start`).
+project_id = "randopleinelune"
+
+[api]
+schemas = ["public"]
+extra_search_path = ["public", "extensions"]
+
+[db]
+major_version = 15
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
+[auth]
+site_url = "randopleinelune://"
+additional_redirect_urls = ["randopleinelune://**", "exp://**"]
+# Les comptes administrateur sont créés par l'organisateur dans le tableau de
+# bord Supabase : aucune inscription publique.
+enable_signup = false
+
+[auth.email]
+enable_signup = false
+enable_confirmations = true
+
+[storage.buckets.event-photos]
+public = true
+file_size_limit = "5MiB"
+allowed_mime_types = ["image/jpeg", "image/png", "image/webp"]
+
+[functions.process-notifications]
+# Authentifiée par NOTIFICATIONS_CRON_SECRET (voir index.ts), pas par JWT.
+verify_jwt = false
