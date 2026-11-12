@@ -1,8 +1,9 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, Text, View } from 'react-native';
+import { EventCover } from '@/components/EventCard';
 import {
-  Banner, Body, Button, Card, Checkbox, Field, Header, InfoRow, Loading, Screen, SectionTitle, Stepper, styles,
+  Banner, Button, Card, Checkbox, Field, Header, Icon, LinkText, Loading, Screen, SectionTitle, Stepper, styles,
 } from '@/components/ui';
 import { createReservation, getEvent, getSettings } from '@/lib/api';
 import { newUuid } from '@/lib/ids';
@@ -11,7 +12,7 @@ import { capitalize, formatDate, formatPrice, formatTariff, formatTime } from '@
 import { useMyReservations } from '@/lib/myReservations';
 import { useFocusData } from '@/lib/useAsync';
 import { attendeesPayload, validateReservation, type FormErrors, type ReservationForm } from '@/lib/validation';
-import { colors, spacing } from '@/theme';
+import { colors, fonts, spacing } from '@/theme';
 
 export default function Reserve() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -34,7 +35,7 @@ export default function Reserve() {
   const [submitting, setSubmitting] = useState(false);
   const [showNames, setShowNames] = useState(false);
 
-  const header = <Header title="Réserver" subtitle="Détails de votre inscription" onBack={() => router.back()} />;
+  const header = <Header title="Réserver" subtitle="Votre inscription" onBack={() => router.back()} seed="reserver" />;
   const [event, settings] = data ?? [null, null];
   if (loading && !data) return <Screen header={header}><Loading /></Screen>;
   if (!event || !settings) {
@@ -86,40 +87,55 @@ export default function Reserve() {
         header={header}
         footer={(
           <>
-            <Button title="Confirmer la réservation" onPress={submit} loading={submitting} disabled={seatsLeft === 0} />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <Text style={styles.infoLabel}>Total à régler sur place</Text>
+              <Text style={{ fontFamily: fonts.display, fontSize: 22, color: colors.text }}>{formatPrice(total)}</Text>
+            </View>
+            <Button variant="gold" icon="checkmark-circle-outline" title="Confirmer la réservation" onPress={submit}
+              loading={submitting} disabled={seatsLeft === 0} />
             <Text style={[styles.fieldHint, { textAlign: 'center' }]}>Confirmation immédiate si places disponibles</Text>
           </>
         )}
       >
-        <Card>
-          <Text style={[styles.body, { fontWeight: '700' }]}>{event.title}</Text>
-          <Body muted>{capitalize(formatDate(event.starts_at))} • {formatTime(event.starts_at)} • {event.meeting_point}</Body>
+        <Card style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'center' }}>
+          <View style={{ width: 64 }}><EventCover uri={event.cover_image} height={64} seed={event.id} /></View>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={{ fontFamily: fonts.display, fontSize: 17, color: colors.text }} numberOfLines={2}>{event.title}</Text>
+            <Text style={styles.fieldHint}>{capitalize(formatDate(event.starts_at))} · {formatTime(event.starts_at)}</Text>
+            <Text style={styles.fieldHint} numberOfLines={1}>{event.meeting_point} · {formatTariff(event.price_cents)}</Text>
+          </View>
         </Card>
 
         <SectionTitle>Contact principal</SectionTitle>
-        <Field label="Prénom" value={form.firstName} onChangeText={(v) => set('firstName', v)} error={errors.firstName}
+        <Field label="Prénom" icon="person-outline" value={form.firstName} onChangeText={(v) => set('firstName', v)} error={errors.firstName}
           autoComplete="given-name" textContentType="givenName" maxLength={80} />
-        <Field label="Nom" value={form.lastName} onChangeText={(v) => set('lastName', v)} error={errors.lastName}
+        <Field label="Nom" icon="person-outline" value={form.lastName} onChangeText={(v) => set('lastName', v)} error={errors.lastName}
           autoComplete="family-name" textContentType="familyName" maxLength={80} />
-        <Field label="Adresse e-mail" value={form.email} onChangeText={(v) => set('email', v)} error={errors.email}
+        <Field label="Adresse e-mail" icon="mail-outline" value={form.email} onChangeText={(v) => set('email', v)} error={errors.email}
           keyboardType="email-address" autoCapitalize="none" autoComplete="email" textContentType="emailAddress"
           hint="La confirmation et les QR codes y seront envoyés." />
-        <Field label="Téléphone" value={form.phone} onChangeText={(v) => set('phone', v)} error={errors.phone}
+        <Field label="Téléphone" icon="call-outline" value={form.phone} onChangeText={(v) => set('phone', v)} error={errors.phone}
           keyboardType="phone-pad" autoComplete="tel" textContentType="telephoneNumber"
-          hint="Utile à l'organisateur le jour de la sortie." />
+          hint="Utile à l’organisateur le jour de la sortie." />
 
+        <SectionTitle>Participants</SectionTitle>
         <Stepper label="Nombre de participants" value={form.participantCount} min={1} max={maxCount}
           onChange={(v) => set('participantCount', v)} />
         {errors.participantCount ? <Text style={styles.fieldError}>{errors.participantCount}</Text> : null}
-        <Text style={styles.fieldHint}>
-          {seatsLeft} place{seatsLeft > 1 ? 's' : ''} restante{seatsLeft > 1 ? 's' : ''} • un QR code par participant
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Icon name="qr-code-outline" size={14} color={colors.textMuted} />
+          <Text style={styles.fieldHint}>
+            {seatsLeft} place{seatsLeft > 1 ? 's' : ''} restante{seatsLeft > 1 ? 's' : ''} · un billet QR par participant
+          </Text>
+        </View>
 
         {form.participantCount > 1 ? (
           <View style={{ gap: spacing.sm }}>
-            <Pressable onPress={() => setShowNames((s) => !s)} accessibilityRole="button" hitSlop={8}>
-              <Text style={{ color: colors.secondary, fontWeight: '600' }}>
-                {showNames ? '− Masquer' : '+ Indiquer'} le nom des accompagnants (facultatif)
+            <Pressable onPress={() => setShowNames((s) => !s)} accessibilityRole="button" hitSlop={8}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 36 }}>
+              <Icon name={showNames ? 'remove-circle-outline' : 'add-circle-outline'} size={18} color={colors.secondary} />
+              <Text style={{ color: colors.secondary, fontFamily: fonts.medium, fontSize: 14 }}>
+                {showNames ? 'Masquer' : 'Indiquer'} le nom des accompagnants (facultatif)
               </Text>
             </Pressable>
             {showNames ? Array.from({ length: form.participantCount - 1 }, (_, i) => (
@@ -145,18 +161,14 @@ export default function Reserve() {
           </View>
         ) : null}
 
-        <Card>
-          <InfoRow label="Tarif" value={formatTariff(event.price_cents)} />
-          <InfoRow label="Total à régler sur place" value={formatPrice(total)} />
-        </Card>
-
+        <SectionTitle>Conditions</SectionTitle>
         <Checkbox checked={form.acceptTerms} onChange={(v) => set('acceptTerms', v)}
           label="J'accepte les conditions de participation (paiement sur place, consignes de sécurité, conditions d'annulation)." />
         <Checkbox checked={form.acceptPrivacy} onChange={(v) => set('acceptPrivacy', v)}
           label="J'ai lu la politique de confidentialité : mes coordonnées servent uniquement à l'organisation de la sortie." />
-        <Pressable onPress={() => router.push('/confidentialite')} accessibilityRole="link" hitSlop={8}>
-          <Text style={{ color: colors.secondary, textDecorationLine: 'underline' }}>Lire les conditions et la politique de confidentialité</Text>
-        </Pressable>
+        <LinkText icon="document-text-outline" onPress={() => router.push('/confidentialite')}>
+          Lire les conditions et la politique de confidentialité
+        </LinkText>
         {errors.consent ? <Text style={styles.fieldError}>{errors.consent}</Text> : null}
 
         {serverError ? <Banner message={serverError} /> : null}

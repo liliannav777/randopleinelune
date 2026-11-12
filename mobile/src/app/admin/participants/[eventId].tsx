@@ -61,12 +61,12 @@ export default function Participants() {
   };
 
   return (
-    <Screen header={<Header title="Participants" subtitle={event?.title} onBack={() => router.back()} />}
+    <Screen header={<Header title="Participants" subtitle={event?.title} seed="participants" onBack={() => router.back()} />}
       refreshing={refreshing} onRefresh={refresh}>
-      <Field label="Rechercher" value={search} onChangeText={setSearch} placeholder="Nom, e-mail ou téléphone"
+      <Field label="Rechercher" icon="search-outline" value={search} onChangeText={setSearch} placeholder="Nom, e-mail ou téléphone"
         autoCapitalize="none" autoCorrect={false} />
       <Chips options={FILTERS} value={filter} onChange={setFilter} />
-      <Button variant="secondary" title="Partager la liste (secours hors réseau)" onPress={shareList} />
+      <Button variant="secondary" small icon="share-outline" title="Partager la liste (secours hors réseau)" onPress={shareList} />
 
       {error ? <Banner message={error.message} /> : null}
       {actionError ? <Banner message={actionError} /> : null}
@@ -78,7 +78,7 @@ export default function Participants() {
         const showPayment = isFirst(p) && p.reservation_status === 'confirmed';
         return (
           <Card key={p.attendee_id}>
-            <Text style={[styles.body, { fontWeight: '700' }]}>{p.first_name} {p.last_name}</Text>
+            <Text style={[styles.sectionTitle, { fontSize: 18 }]}>{p.first_name} {p.last_name}</Text>
             {p.participant_count > 1 ? (
               <Body muted>Groupe de {p.participant_count} • contact : {p.contact_name}</Body>
             ) : null}
@@ -98,8 +98,8 @@ export default function Participants() {
 
             {p.reservation_status === 'confirmed' ? (
               p.attendance_status === 'expected'
-                ? <Button title="Pointer (saisie manuelle)" onPress={() => act(() => adminCheckIn(p.attendee_id, eventId, 'manual'))} />
-                : <Button variant="ghost" title="Annuler le pointage" onPress={() => act(() => adminUndoCheckIn(p.attendee_id))} />
+                ? <Button small icon="checkmark-circle-outline" title="Pointer (saisie manuelle)" onPress={() => act(() => adminCheckIn(p.attendee_id, eventId, 'manual'))} />
+                : <Button variant="ghost" small icon="arrow-undo-outline" title="Annuler le pointage" onPress={() => act(() => adminUndoCheckIn(p.attendee_id))} />
             ) : null}
 
             {showPayment ? (
@@ -107,13 +107,13 @@ export default function Participants() {
                 <PaymentEditor reservationId={p.reservation_id} amountDue={p.amount_due_cents} amountPaid={p.amount_paid_cents}
                   onSaved={() => { setOpenPayment(null); refresh(); }} />
               ) : (
-                <Button variant="secondary" title={`Paiement : ${formatPrice(p.amount_paid_cents)} / ${formatPrice(p.amount_due_cents)}`}
+                <Button variant="secondary" small icon="wallet-outline" title={`Paiement : ${formatPrice(p.amount_paid_cents)} / ${formatPrice(p.amount_due_cents)}`}
                   onPress={() => setOpenPayment(p.reservation_id)} />
               )
             ) : null}
 
             {showPayment ? (
-              <Button variant="ghost" title="Annuler la réservation"
+              <Button variant="ghost" small icon="close-circle-outline" title="Annuler la réservation"
                 onPress={() => Alert.alert('Annuler cette réservation ?',
                   `${p.participant_count} place(s) seront libérées et le contact sera prévenu par e-mail.`, [
                     { text: 'Non', style: 'cancel' },
