@@ -1,0 +1,25 @@
+-- Données fictives pour le développement (à remplacer par les vraies sorties).
+insert into public.events (title, summary, description, starts_at, ends_at, meeting_point, meeting_point_url,
+  distance_km, elevation_m, difficulty, price_cents, capacity, equipment, instructions, status)
+values
+  ('Randonnée nocturne – Pierres Dorées',
+   'Une boucle entre vignes et villages de pierres dorées sous la pleine lune.',
+   'Départ au coucher du soleil pour une boucle à travers les vignes du sud Beaujolais. Pause tisane à mi-parcours, retour au parking vers minuit.',
+   date_trunc('day', now()) + interval '16 days 19 hours', date_trunc('day', now()) + interval '17 days',
+   'Parking de l''église, Oingt', 'https://maps.google.com/?q=Oingt',
+   11.5, 320, 'moyenne', 2000, 30,
+   'Chaussures de randonnée, frontale, vêtements chauds, eau (1 L), petite collation.',
+   'Arrivée 15 minutes avant le départ. Présentez votre QR code à l''accueil. Paiement sur place.',
+   'published'),
+  ('Pleine lune au Mont Brouilly',
+   'Montée au sommet du Brouilly pour admirer la lune se lever sur la vallée de la Saône.',
+   'Ascension tranquille jusqu''à la chapelle Notre-Dame-aux-Raisins, panorama à 360°.',
+   date_trunc('day', now()) + interval '45 days 18 hours 30 minutes', date_trunc('day', now()) + interval '45 days 23 hours',
+   'Place du village, Saint-Lager', 'https://maps.google.com/?q=Saint-Lager',
+   9.0, 410, 'soutenue', 2000, 30,
+   'Chaussures de randonnée, frontale, coupe-vent.',
+   'Bâtons conseillés pour la descente.',
+   'published'),
+  ('Sortie en préparation', null, null,
+   date_trunc('day', now()) + interval '75 days 19 hours', null,
+   'À définir', null, 10, 250, 'facile', 2000, 30, null, null, 'draft');
