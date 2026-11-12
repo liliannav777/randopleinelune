@@ -2,8 +2,9 @@ import { createClient } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
 import { AppState, Platform } from 'react-native';
 
-const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+// Tolère une URL copiée avec un chemin (ex. « …supabase.co/rest/v1/ ») : seule la racine est utilisée.
+const url = process.env.EXPO_PUBLIC_SUPABASE_URL?.trim().replace(/\/(rest|auth|storage|functions)\/v1\/?.*$/, '').replace(/\/+$/, '');
+const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.trim();
 
 if (!url || !anonKey) {
   // Rappel au développeur : voir mobile/.env.example
