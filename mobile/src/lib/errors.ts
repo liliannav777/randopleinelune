@@ -83,6 +83,10 @@ export function toAppError(err: unknown): AppError {
   if (err instanceof AppError) return err;
   const e = (err ?? {}) as PgError;
   const msg = e.message ?? '';
+  // En développement, l'erreur technique complète s'affiche dans le terminal `expo start`.
+  if (typeof __DEV__ !== 'undefined' && __DEV__) {
+    console.warn('[Supabase]', JSON.stringify({ message: e.message, code: e.code, details: e.details, hint: (e as { hint?: string }).hint }));
+  }
   if (KNOWN.has(msg)) {
     const detail = e.details ?? undefined;
     return new AppError(msg as BusinessErrorCode, messageFor(msg, detail), detail);
