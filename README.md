@@ -8,7 +8,7 @@ Réalisation du MVP décrit dans *Spécifications V1 — document de cadrage (11
 
 | Dossier | Contenu |
 |---|---|
-| [`mobile/`](mobile) | Application React Native + Expo (SDK 58) + TypeScript, navigation Expo Router |
+| [`mobile/`](mobile) | Application React Native + Expo (SDK 54, compatible Expo Go) + TypeScript, navigation Expo Router |
 | [`supabase/migrations/`](supabase/migrations) | Schéma PostgreSQL, règles métier (fonctions serveur), RLS et droits |
 | [`supabase/functions/`](supabase/functions) | Edge Function d'envoi des e-mails et notifications push |
 | [`supabase/tests/`](supabase/tests) | Tests des règles métier et de concurrence (§11) |
