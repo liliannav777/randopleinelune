@@ -11,7 +11,8 @@ import { useAdminAuth } from '@/lib/adminAuth';
 import { capitalize, formatDate, formatPrice, formatShortDate, formatTime } from '@/lib/format';
 import type { EventStats, HikeEvent } from '@/lib/types';
 import { useFocusData } from '@/lib/useAsync';
-import { colors, fonts, radius, shadow, spacing } from '@/theme';
+import { fonts, radius, shadow, spacing, type Colors } from '@/theme';
+import { useColors, useStyles } from '@/lib/theme';
 
 function pickDefault(events: HikeEvent[]): HikeEvent | undefined {
   const now = Date.now() - 12 * 3600 * 1000; // une sortie reste « en cours » 12 h
@@ -21,11 +22,13 @@ function pickDefault(events: HikeEvent[]): HikeEvent | undefined {
 }
 
 function Action({ icon, title, onPress, primary }: { icon: IconName; title: string; onPress: () => void; primary?: boolean }) {
+  const colors = useColors();
+  const s = useStyles(makeStyles);
   return (
     <Pressable onPress={onPress} accessibilityRole="button"
       style={({ pressed }) => [s.action, primary && s.actionPrimary, shadow(1), pressed && { opacity: 0.85 }]}>
       <View style={[s.actionIcon, primary && { backgroundColor: colors.accent }]}>
-        <Icon name={icon} size={22} color={colors.primary} />
+        <Icon name={icon} size={22} color={primary ? colors.primary : colors.accentDark} />
       </View>
       <Text style={[s.actionText, primary && { color: colors.onPrimary }]}>{title}</Text>
     </Pressable>
@@ -33,6 +36,8 @@ function Action({ icon, title, onPress, primary }: { icon: IconName; title: stri
 }
 
 export default function AdminDashboard() {
+  const colors = useColors();
+  const s = useStyles(makeStyles);
   const router = useRouter();
   const { signOut } = useAdminAuth();
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -124,7 +129,7 @@ export default function AdminDashboard() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   selector: { gap: spacing.sm, paddingHorizontal: spacing.lg, paddingVertical: 2 },
   pill: {
     backgroundColor: colors.surface, borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm,

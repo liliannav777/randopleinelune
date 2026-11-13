@@ -1,11 +1,12 @@
 import { Stack } from 'expo-router';
 import { Loading } from '@/components/ui';
 import { useAdminAuth } from '@/lib/adminAuth';
-import { colors } from '@/theme';
+import { useColors } from '@/lib/theme';
 
 // Espace protégé : sans session administrateur, seule la connexion est accessible.
 // (L'application n'est qu'une interface : chaque action est revérifiée côté serveur.)
 export default function AdminLayout() {
+  const colors = useColors();
   const { isAdmin, ready } = useAdminAuth();
   if (!ready) return <Loading />;
   return (

@@ -7,9 +7,10 @@ import {
 } from '@/lib/format';
 import { photoFor } from '@/lib/photos';
 import type { HikeEvent } from '@/lib/types';
-import { colors, fonts, radius, spacing } from '@/theme';
+import { fonts, radius, spacing, type Colors } from '@/theme';
 import { NightSky } from './art';
 import { Badge, Card, Fact, Icon, ProgressBar, type IconName } from './ui';
+import { useColors, useStyles } from '@/lib/theme';
 
 export function eventStatusBadge(e: HikeEvent) {
   if (e.status === 'cancelled') return <Badge label="Annulée" tone="danger" />;
@@ -30,6 +31,7 @@ export function EventCover({ uri, height = 160, seed = 'rpl', hint, rounded = tr
   /** Titre et lieu de la sortie, pour choisir une photo du bon endroit. */
   hint?: string;
 }) {
+  const colors = useColors();
   const fallback = uri ? undefined : photoFor(seed, hint);
   return (
     <View style={[{ height, overflow: 'hidden', backgroundColor: colors.primary }, rounded && { borderRadius: radius.md }]}>
@@ -52,6 +54,7 @@ export function EventCover({ uri, height = 160, seed = 'rpl', hint, rounded = tr
 const MONTHS = ['JANV.', 'FÉVR.', 'MARS', 'AVR.', 'MAI', 'JUIN', 'JUIL.', 'AOÛT', 'SEPT.', 'OCT.', 'NOV.', 'DÉC.'];
 
 export function DateBadge({ iso }: { iso: string }) {
+  const s = useStyles(makeStyles);
   const parts = new Intl.DateTimeFormat('fr-FR', { timeZone: 'Europe/Paris', day: 'numeric', month: 'numeric' })
     .formatToParts(new Date(iso));
   const day = parts.find((p) => p.type === 'day')?.value ?? '';
@@ -74,6 +77,8 @@ export function eventFacts(e: Pick<HikeEvent, 'distance_km' | 'elevation_m' | 'd
 }
 
 export function SeatsMeter({ event }: { event: HikeEvent }) {
+  const colors = useColors();
+  const s = useStyles(makeStyles);
   const left = Math.max(0, event.capacity - event.seats_taken);
   return (
     <View style={{ gap: 6 }}>
@@ -92,6 +97,8 @@ export function SeatsMeter({ event }: { event: HikeEvent }) {
 }
 
 export function EventCard({ event, onPress }: { event: HikeEvent; onPress: () => void }) {
+  const colors = useColors();
+  const s = useStyles(makeStyles);
   return (
     <Card onPress={onPress} style={{ padding: 0, overflow: 'hidden', gap: 0 }}
       accessibilityLabel={`${event.title}, ${formatDate(event.starts_at)}`}>
@@ -119,13 +126,13 @@ export function EventCard({ event, onPress }: { event: HikeEvent; onPress: () =>
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   coverTop: {
     position: 'absolute', top: spacing.md, left: spacing.md, right: spacing.md, flexDirection: 'row',
     justifyContent: 'space-between', alignItems: 'flex-start',
   },
   dateBadge: {
-    backgroundColor: colors.surface, borderRadius: radius.md, paddingHorizontal: 10, paddingVertical: 6,
+    backgroundColor: colors.white, borderRadius: radius.md, paddingHorizontal: 10, paddingVertical: 6,
     alignItems: 'center', minWidth: 54,
   },
   dateDay: { fontFamily: fonts.display, fontSize: 22, lineHeight: 26, color: colors.primary },

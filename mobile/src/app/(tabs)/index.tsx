@@ -5,13 +5,20 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MoonMark, NightSky } from '@/components/art';
 import { EventCard } from '@/components/EventCard';
-import { Banner, Body, Button, Card, Icon, LinkText, Screen, SectionTitle, type IconName } from '@/components/ui';
+import { Banner, Body, Button, Card, Chips, Icon, LinkText, Screen, SectionTitle, type IconName } from '@/components/ui';
 import { listUpcomingEvents } from '@/lib/api';
 import { capitalize, formatDate, formatTime } from '@/lib/format';
 import { useMyReservations } from '@/lib/myReservations';
 import { heroPhoto } from '@/lib/photos';
 import { useFocusData } from '@/lib/useAsync';
-import { colors, fonts, radius, spacing } from '@/theme';
+import { fonts, radius, spacing, type Colors } from '@/theme';
+import { useColors, useStyles, useTheme, type ThemePreference } from '@/lib/theme';
+
+const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
+  { value: 'system', label: 'Automatique' },
+  { value: 'light', label: 'Clair' },
+  { value: 'dark', label: 'Sombre' },
+];
 
 const PROMISES: { icon: IconName; title: string; text: string }[] = [
   { icon: 'moon-outline', title: 'Sous la pleine lune', text: 'Des sorties nocturnes encadrées, au rythme de la nuit.' },
@@ -20,6 +27,7 @@ const PROMISES: { icon: IconName; title: string; text: string }[] = [
 ];
 
 function Hero({ onDiscover }: { onDiscover: () => void }) {
+  const s = useStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const photo = heroPhoto();
   return (
@@ -45,6 +53,9 @@ function Hero({ onDiscover }: { onDiscover: () => void }) {
 }
 
 export default function Home() {
+  const { preference, setPreference } = useTheme();
+  const colors = useColors();
+  const s = useStyles(makeStyles);
   const router = useRouter();
   const { data: events, error, refreshing, refresh } = useFocusData(listUpcomingEvents);
   const { reservations } = useMyReservations();
@@ -60,7 +71,7 @@ export default function Home() {
       {nextMine ? (
         <Card onPress={() => router.push(`/mes-reservations/${nextMine.id}`)} style={s.myTicket}
           accessibilityLabel={`Mon prochain billet : ${nextMine.event.title}`}>
-          <View style={s.myTicketIcon}><Icon name="ticket" size={22} color={colors.primary} /></View>
+          <View style={s.myTicketIcon}><Icon name="ticket" size={22} color={colors.accentDark} /></View>
           <View style={{ flex: 1 }}>
             <Text style={s.myTicketEyebrow}>VOTRE PROCHAINE SORTIE</Text>
             <Text style={s.myTicketTitle} numberOfLines={1}>{nextMine.event.title}</Text>
@@ -109,11 +120,16 @@ export default function Home() {
         <LinkText icon="shield-checkmark-outline" onPress={() => router.push('/confidentialite')}>Conditions et confidentialité</LinkText>
         <LinkText icon="lock-closed-outline" onPress={() => router.push('/admin')}>Espace organisateur</LinkText>
       </View>
+
+      <View style={s.appearance}>
+        <Text style={s.appearanceLabel}>Apparence</Text>
+        <Chips options={THEME_OPTIONS} value={preference} onChange={setPreference} />
+      </View>
     </Screen>
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   hero: {
     paddingHorizontal: spacing.xl, paddingBottom: spacing.xxl + spacing.xl, overflow: 'hidden',
     borderBottomLeftRadius: radius.xl, borderBottomRightRadius: radius.xl, backgroundColor: colors.primary,
@@ -146,4 +162,6 @@ const s = StyleSheet.create({
   galleryTitle: { fontFamily: fonts.display, fontSize: 20, color: colors.onPrimary },
   galleryText: { fontFamily: fonts.regular, fontSize: 13, color: colors.onPrimaryMuted },
   footerLinks: { gap: spacing.xs, marginTop: spacing.lg, alignItems: 'center' },
+  appearance: { alignItems: 'center', gap: spacing.sm, marginTop: spacing.md },
+  appearanceLabel: { fontFamily: fonts.semibold, fontSize: 11, letterSpacing: 1.4, color: colors.textFaint, textTransform: 'uppercase' },
 });

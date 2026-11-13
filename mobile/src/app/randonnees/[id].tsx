@@ -11,9 +11,12 @@ import { capitalize, difficultyLabel, formatDate, formatDistance, formatPrice, f
 import { useMyReservations } from '@/lib/myReservations';
 import type { HikeEvent } from '@/lib/types';
 import { useFocusData } from '@/lib/useAsync';
-import { colors, fonts, radius, shadow, spacing } from '@/theme';
+import { fonts, radius, shadow, spacing, type Colors } from '@/theme';
+import { useColors, useStyles } from '@/lib/theme';
 
 function Hero({ event, onBack }: { event: HikeEvent; onBack: () => void }) {
+  const colors = useColors();
+  const s = useStyles(makeStyles);
   const insets = useSafeAreaInsets();
   return (
     <EventCover uri={event.cover_image} height={300 + insets.top} seed={event.id} hint={`${event.title} ${event.meeting_point}`} rounded={false}>
@@ -35,6 +38,8 @@ function Hero({ event, onBack }: { event: HikeEvent; onBack: () => void }) {
 }
 
 function FactTile({ icon, label, value }: { icon: IconName; label: string; value: string }) {
+  const colors = useColors();
+  const s = useStyles(makeStyles);
   return (
     <View style={s.factTile}>
       <Icon name={icon} size={20} color={colors.accentDark} />
@@ -45,6 +50,8 @@ function FactTile({ icon, label, value }: { icon: IconName; label: string; value
 }
 
 export default function HikeDetail() {
+  const colors = useColors();
+  const s = useStyles(makeStyles);
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: event, error, loading, refreshing, refresh } = useFocusData(() => getEvent(id), [id]);
@@ -143,7 +150,7 @@ export default function HikeDetail() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   heroTop: { position: 'absolute', left: spacing.lg },
   heroBottom: { position: 'absolute', left: spacing.lg, right: spacing.lg, bottom: spacing.xxl + spacing.xl, gap: spacing.sm },
   heroTitle: { fontFamily: fonts.displayBold, fontSize: 30, lineHeight: 36, color: colors.onPrimary },

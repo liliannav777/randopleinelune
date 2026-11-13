@@ -3,13 +3,16 @@ import { StyleSheet, Text, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { capitalize, formatDate, formatTime } from '@/lib/format';
 import type { ReservationAttendee } from '@/lib/types';
-import { colors, fonts, radius, shadow, spacing } from '@/theme';
+import { fonts, radius, shadow, spacing, type Colors } from '@/theme';
 import { MoonMark } from './art';
 import { Badge } from './ui';
+import { useColors, useStyles } from '@/lib/theme';
 
 export function QrCard({ attendee, total, eventTitle, startsAt }: {
   attendee: ReservationAttendee; total: number; eventTitle?: string; startsAt?: string;
 }) {
+  const colors = useColors();
+  const s = useStyles(makeStyles);
   const label = `${attendee.first_name} ${attendee.last_name}`;
   return (
     <View style={[s.ticket, shadow(2)]}>
@@ -35,7 +38,10 @@ export function QrCard({ attendee, total, eventTitle, startsAt }: {
 
       {attendee.qr_token ? (
         <View style={s.qrWrap} accessible accessibilityRole="image" accessibilityLabel={`QR code de ${label}`}>
-          <QRCode value={attendee.qr_token} size={196} color={colors.primary} backgroundColor={colors.surface} ecl="M" />
+          {/* Toujours foncé sur blanc, quel que soit le thème, pour rester lisible au scanner. */}
+          <View style={s.qrBox}>
+            <QRCode value={attendee.qr_token} size={196} color={colors.primary} backgroundColor={colors.white} ecl="M" />
+          </View>
           <Text style={s.hint}>À présenter à l’organisateur à l’arrivée</Text>
         </View>
       ) : (
@@ -45,7 +51,7 @@ export function QrCard({ attendee, total, eventTitle, startsAt }: {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   ticket: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg, gap: spacing.sm },
   top: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   eyebrow: { fontFamily: fonts.semibold, fontSize: 11, letterSpacing: 1.4, color: colors.accentDark },
@@ -54,6 +60,7 @@ const s = StyleSheet.create({
   perforation: { height: 24, justifyContent: 'center' },
   dashes: { borderTopWidth: 2, borderColor: colors.border, borderStyle: 'dashed' },
   notch: { position: 'absolute', width: 24, height: 24, borderRadius: 12, backgroundColor: colors.background, top: 0 },
+  qrBox: { backgroundColor: colors.white, padding: 12, borderRadius: radius.md },
   qrWrap: { alignItems: 'center', gap: spacing.md, paddingBottom: spacing.xs },
   hint: { fontFamily: fonts.medium, fontSize: 12, color: colors.textMuted },
 });

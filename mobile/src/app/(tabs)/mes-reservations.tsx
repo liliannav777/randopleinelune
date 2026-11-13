@@ -6,9 +6,12 @@ import { toAppError } from '@/lib/errors';
 import { formatTime } from '@/lib/format';
 import { useMyReservations } from '@/lib/myReservations';
 import type { Reservation } from '@/lib/types';
-import { colors, fonts, spacing } from '@/theme';
+import { fonts, spacing, type Colors } from '@/theme';
+import { useColors, useStyles } from '@/lib/theme';
 
 function ReservationRow({ r, onPress, past }: { r: Reservation; onPress: () => void; past?: boolean }) {
+  const colors = useColors();
+  const s = useStyles(makeStyles);
   return (
     <Card onPress={onPress} style={[s.row, past && { opacity: 0.75 }]}
       accessibilityLabel={`${r.event.title}, ${r.participant_count} participant(s)`}>
@@ -61,7 +64,7 @@ export default function MyReservations() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md },
   thumb: { width: 84 },
   thumbDate: { position: 'absolute', top: 6, left: 6, transform: [{ scale: 0.78 }], transformOrigin: 'top left' },

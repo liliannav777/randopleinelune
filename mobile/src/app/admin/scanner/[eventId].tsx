@@ -3,13 +3,14 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { Linking, StyleSheet, Text, View } from 'react-native';
 import { PaymentEditor } from '@/components/PaymentEditor';
-import { Banner, Body, Button, Card, Header, Icon, InfoRow, Screen, styles, type IconName } from '@/components/ui';
+import { Banner, Body, Button, Card, Header, Icon, InfoRow, Screen, type IconName, useUiStyles } from '@/components/ui';
 import { adminCheckIn, adminLookupQr, getEvent } from '@/lib/api';
 import { toAppError } from '@/lib/errors';
 import { formatPrice, formatTime, paymentLabel } from '@/lib/format';
 import type { AttendeeAdminInfo, ScanResult } from '@/lib/types';
 import { useFocusData } from '@/lib/useAsync';
-import { colors, fonts, radius, spacing } from '@/theme';
+import { fonts, radius, spacing, type Colors } from '@/theme';
+import { useColors, useStyles } from '@/lib/theme';
 
 const RESULT: Record<ScanResult, { label: string; tone: 'success' | 'warning' | 'danger'; icon: IconName }> = {
   valid: { label: 'Réservation valide', tone: 'success', icon: 'checkmark-circle' },
@@ -19,13 +20,16 @@ const RESULT: Record<ScanResult, { label: string; tone: 'success' | 'warning' | 
   wrong_event: { label: 'QR code d’une autre sortie', tone: 'danger', icon: 'swap-horizontal' },
   unknown: { label: 'QR code invalide', tone: 'danger', icon: 'help-circle' },
 };
-const TONE = {
+const tones = (colors: Colors) => ({
   success: { bg: colors.successBg, fg: colors.success },
   warning: { bg: colors.warningBg, fg: colors.warning },
   danger: { bg: colors.dangerBg, fg: colors.danger },
-};
+});
 
 export default function Scanner() {
+  const s = useStyles(makeStyles);
+  const styles = useUiStyles();
+  const TONE = tones(useColors());
   const { eventId } = useLocalSearchParams<{ eventId: string }>();
   const router = useRouter();
   const [permission, requestPermission] = useCameraPermissions();
@@ -169,7 +173,7 @@ export default function Scanner() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   camera: { height: 300, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: colors.primary },
   frame: { position: 'absolute', top: 50, bottom: 50, left: '22%', right: '22%' },
   corner: { position: 'absolute', width: 34, height: 34, borderColor: colors.accent },

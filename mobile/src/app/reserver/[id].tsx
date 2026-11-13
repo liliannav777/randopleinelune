@@ -3,7 +3,19 @@ import { useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, Text, View } from 'react-native';
 import { EventCover } from '@/components/EventCard';
 import {
-  Banner, Button, Card, Checkbox, Field, Header, Icon, LinkText, Loading, Screen, SectionTitle, Stepper, styles,
+  Banner,
+  Button,
+  Card,
+  Checkbox,
+  Field,
+  Header,
+  Icon,
+  LinkText,
+  Loading,
+  Screen,
+  SectionTitle,
+  Stepper,
+  useUiStyles,
 } from '@/components/ui';
 import { createReservation, getEvent, getSettings } from '@/lib/api';
 import { newUuid } from '@/lib/ids';
@@ -12,9 +24,12 @@ import { capitalize, formatDate, formatPrice, formatTariff, formatTime } from '@
 import { useMyReservations } from '@/lib/myReservations';
 import { useFocusData } from '@/lib/useAsync';
 import { attendeesPayload, validateReservation, type FormErrors, type ReservationForm } from '@/lib/validation';
-import { colors, fonts, spacing } from '@/theme';
+import { fonts, spacing } from '@/theme';
+import { useColors } from '@/lib/theme';
 
 export default function Reserve() {
+  const colors = useColors();
+  const styles = useUiStyles();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { addToken, upsert } = useMyReservations();
@@ -133,8 +148,8 @@ export default function Reserve() {
           <View style={{ gap: spacing.sm }}>
             <Pressable onPress={() => setShowNames((s) => !s)} accessibilityRole="button" hitSlop={8}
               style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 36 }}>
-              <Icon name={showNames ? 'remove-circle-outline' : 'add-circle-outline'} size={18} color={colors.secondary} />
-              <Text style={{ color: colors.secondary, fontFamily: fonts.medium, fontSize: 14 }}>
+              <Icon name={showNames ? 'remove-circle-outline' : 'add-circle-outline'} size={18} color={colors.link} />
+              <Text style={{ color: colors.link, fontFamily: fonts.medium, fontSize: 14 }}>
                 {showNames ? 'Masquer' : 'Indiquer'} le nom des accompagnants (facultatif)
               </Text>
             </Pressable>

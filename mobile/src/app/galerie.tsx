@@ -8,9 +8,11 @@ import { listPastEvents } from '@/lib/api';
 import { capitalize, formatDate } from '@/lib/format';
 import { PHOTOS } from '@/lib/photos';
 import { useFocusData } from '@/lib/useAsync';
-import { colors, fonts, radius, shadow, spacing } from '@/theme';
+import { fonts, radius, shadow, spacing, type Colors } from '@/theme';
+import { useStyles } from '@/lib/theme';
 
 export default function Gallery() {
+  const s = useStyles(makeStyles);
   const router = useRouter();
   const { data, error, loading, refreshing, refresh } = useFocusData(() => listPastEvents(30));
 
@@ -59,7 +61,7 @@ export default function Gallery() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   card: { borderRadius: radius.lg, overflow: 'hidden', backgroundColor: colors.primary },
   caption: { position: 'absolute', left: spacing.lg, right: spacing.lg, bottom: spacing.lg, gap: 2 },
   date: { fontFamily: fonts.semibold, fontSize: 11, letterSpacing: 1.2, color: colors.accentLight, textTransform: 'uppercase' },

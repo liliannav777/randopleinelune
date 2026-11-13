@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Linking, Share, Text, View } from 'react-native';
 import { PaymentEditor } from '@/components/PaymentEditor';
-import { Badge, Banner, Body, Button, Card, Chips, Empty, Field, Header, Loading, Screen, styles } from '@/components/ui';
+import { Badge, Banner, Body, Button, Card, Chips, Empty, Field, Header, Loading, Screen, useUiStyles } from '@/components/ui';
 import { adminCancelReservation, adminCheckIn, adminListParticipants, adminUndoCheckIn, getEvent } from '@/lib/api';
 import { toAppError } from '@/lib/errors';
 import { formatDate, formatPrice, formatTime, paymentLabel } from '@/lib/format';
@@ -21,6 +21,7 @@ const FILTERS: { value: ParticipantFilter; label: string }[] = [
 ];
 
 export default function Participants() {
+  const styles = useUiStyles();
   const { eventId } = useLocalSearchParams<{ eventId: string }>();
   const router = useRouter();
   const [search, setSearch] = useState('');

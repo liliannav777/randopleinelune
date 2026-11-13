@@ -4,7 +4,7 @@
 import { memo, useMemo } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
-import { colors } from '@/theme';
+import { brand as colors } from '@/theme';
 
 /** Générateur pseudo-aléatoire déterministe (même graine = même dessin). */
 function rng(seed: string) {

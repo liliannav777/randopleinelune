@@ -5,7 +5,20 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MoonMark, NightSky } from '@/components/art';
 import { QrCard } from '@/components/QrCard';
 import {
-  Badge, Banner, Body, Button, Card, Empty, Header, Icon, IconButton, InfoRow, Loading, Screen, SectionTitle, styles,
+  Badge,
+  Banner,
+  Body,
+  Button,
+  Card,
+  Empty,
+  Header,
+  Icon,
+  IconButton,
+  InfoRow,
+  Loading,
+  Screen,
+  SectionTitle,
+  useUiStyles,
 } from '@/components/ui';
 import { cancelReservation } from '@/lib/api';
 import { toAppError } from '@/lib/errors';
@@ -13,9 +26,12 @@ import { capitalize, formatDate, formatDateTime, formatPrice, formatTime, paymen
 import { useMyReservations } from '@/lib/myReservations';
 import { enablePushFor, getPushPermission, type PushPermission } from '@/lib/notifications';
 import type { Reservation } from '@/lib/types';
-import { colors, fonts, radius, spacing } from '@/theme';
+import { fonts, radius, spacing, type Colors } from '@/theme';
+import { useColors, useStyles } from '@/lib/theme';
 
 function Hero({ r, isNew, onBack }: { r: Reservation; isNew: boolean; onBack: () => void }) {
+  const colors = useColors();
+  const s = useStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const confirmed = r.status === 'confirmed';
   return (
@@ -39,6 +55,9 @@ function Hero({ r, isNew, onBack }: { r: Reservation; isNew: boolean; onBack: ()
 }
 
 export default function ReservationDetail() {
+  const colors = useColors();
+  const s = useStyles(makeStyles);
+  const styles = useUiStyles();
   const { id, nouvelle } = useLocalSearchParams<{ id: string; nouvelle?: string }>();
   const router = useRouter();
   const { reservations, loading, upsert, tokens } = useMyReservations();
@@ -166,7 +185,7 @@ export default function ReservationDetail() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   hero: {
     paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl + spacing.xl, overflow: 'hidden', backgroundColor: colors.primary,
   },

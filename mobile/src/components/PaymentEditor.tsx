@@ -5,7 +5,7 @@ import { toAppError } from '@/lib/errors';
 import { centsToInput, formatPrice, parseEuros } from '@/lib/format';
 import type { PaymentMethod } from '@/lib/types';
 import { spacing } from '@/theme';
-import { Banner, Button, Chips, Field, styles } from './ui';
+import { Banner, Button, Chips, Field, useUiStyles } from './ui';
 
 const METHODS: { value: PaymentMethod; label: string }[] = [
   { value: 'cash', label: 'Espèces' },
@@ -18,6 +18,7 @@ const METHODS: { value: PaymentMethod; label: string }[] = [
 export function PaymentEditor({ reservationId, amountDue, amountPaid, onSaved }: {
   reservationId: string; amountDue: number; amountPaid: number; onSaved: () => void;
 }) {
+  const styles = useUiStyles();
   const [method, setMethod] = useState<PaymentMethod>('cash');
   const [amount, setAmount] = useState(centsToInput(amountPaid > 0 ? amountPaid : amountDue));
   const [busy, setBusy] = useState(false);

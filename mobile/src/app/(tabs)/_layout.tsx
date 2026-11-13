@@ -2,11 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { useMyReservations } from '@/lib/myReservations';
-import { colors, fonts } from '@/theme';
+import { fonts, type Colors } from '@/theme';
+import { useColors, useStyles } from '@/lib/theme';
 
 type IconPair = [keyof typeof Ionicons.glyphMap, keyof typeof Ionicons.glyphMap];
 
 function TabIcon({ icons, focused, color }: { icons: IconPair; focused: boolean; color: string }) {
+  const s = useStyles(makeStyles);
   return (
     <View style={s.iconWrap}>
       <Ionicons name={focused ? icons[0] : icons[1]} size={23} color={color} />
@@ -16,6 +18,8 @@ function TabIcon({ icons, focused, color }: { icons: IconPair; focused: boolean;
 }
 
 export default function TabsLayout() {
+  const colors = useColors();
+  const s = useStyles(makeStyles);
   const { reservations } = useMyReservations();
   const upcoming = reservations.filter((r) => r.status === 'confirmed' && new Date(r.event.starts_at) > new Date()).length;
 
@@ -23,7 +27,7 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
+        tabBarActiveTintColor: colors.tabActive,
         tabBarInactiveTintColor: colors.textFaint,
         tabBarLabelStyle: { fontFamily: fonts.medium, fontSize: 11, marginBottom: 2 },
         tabBarStyle: s.bar,
@@ -48,7 +52,7 @@ export default function TabsLayout() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   bar: {
     backgroundColor: colors.surface, borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth,
     paddingTop: 6, minHeight: 62,

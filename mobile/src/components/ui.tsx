@@ -7,13 +7,15 @@ import {
   type StyleProp, type TextInputProps, type TextStyle, type ViewStyle,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, fonts, MIN_TOUCH, radius, shadow, spacing } from '@/theme';
+import { useColors, useShadow, useStyles } from '@/lib/theme';
+import { font, fonts, MIN_TOUCH, radius, shadow, spacing, type Colors } from '@/theme';
 import { NightSky } from './art';
 
 export type IconName = ComponentProps<typeof Ionicons>['name'];
 
-export function Icon({ name, size = 18, color = colors.textMuted }: { name: IconName; size?: number; color?: string }) {
-  return <Ionicons name={name} size={size} color={color} accessibilityElementsHidden importantForAccessibility="no" />;
+export function Icon({ name, size = 18, color }: { name: IconName; size?: number; color?: string }) {
+  const colors = useColors();
+  return <Ionicons name={name} size={size} color={color ?? colors.textMuted} accessibilityElementsHidden importantForAccessibility="no" />;
 }
 
 function tap() {
@@ -26,6 +28,8 @@ function tap() {
 export function IconButton({ icon, onPress, label, tone = 'light' }: {
   icon: IconName; onPress: () => void; label: string; tone?: 'light' | 'dark';
 }) {
+  const colors = useColors();
+  const styles = useStyles(makeStyles);
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} hitSlop={8}
       style={({ pressed }) => [styles.iconButton, tone === 'dark' && styles.iconButtonDark, pressed && { opacity: 0.7 }]}>
@@ -37,6 +41,7 @@ export function IconButton({ icon, onPress, label, tone = 'light' }: {
 export function Header({ title, subtitle, onBack, right, seed }: {
   title: string; subtitle?: string; onBack?: () => void; right?: ReactNode; seed?: string;
 }) {
+  const styles = useStyles(makeStyles);
   const insets = useSafeAreaInsets();
   return (
     <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
@@ -64,6 +69,8 @@ export function Screen({ header, hero, children, refreshing, onRefresh, footer, 
   children: ReactNode; refreshing?: boolean; onRefresh?: () => void; footer?: ReactNode;
   contentStyle?: StyleProp<ViewStyle>;
 }) {
+  const colors = useColors();
+  const styles = useStyles(makeStyles);
   return (
     <View style={styles.screen}>
       {header}
@@ -87,21 +94,24 @@ export function Screen({ header, hero, children, refreshing, onRefresh, footer, 
 // ---------------------------------------------------------------------------
 type ButtonVariant = 'primary' | 'gold' | 'secondary' | 'danger' | 'ghost';
 
-const buttonColors: Record<ButtonVariant, { bg: string; fg: string; border?: string }> = {
+const buttonColors = (colors: Colors): Record<ButtonVariant, { bg: string; fg: string; border?: string }> => ({
   primary: { bg: colors.secondary, fg: colors.onPrimary },
   gold: { bg: colors.accent, fg: colors.primary },
-  secondary: { bg: colors.surface, fg: colors.secondary, border: colors.borderStrong },
+  secondary: { bg: colors.surface, fg: colors.link, border: colors.borderStrong },
   danger: { bg: colors.dangerBg, fg: colors.danger },
-  ghost: { bg: 'transparent', fg: colors.secondary },
-};
+  ghost: { bg: 'transparent', fg: colors.link },
+});
 
 export function Button({ title, onPress, variant = 'primary', disabled, loading, accessibilityHint, style, icon, small }: {
   title: string; onPress: () => void; variant?: ButtonVariant;
   disabled?: boolean; loading?: boolean; accessibilityHint?: string; style?: StyleProp<ViewStyle>;
   icon?: IconName; small?: boolean;
 }) {
+  const styles = useStyles(makeStyles);
+  const sh = useShadow();
+  const colors = useColors();
   const inactive = disabled || loading;
-  const c = buttonColors[variant];
+  const c = buttonColors(colors)[variant];
   return (
     <Pressable
       onPress={() => { tap(); onPress(); }}
@@ -114,7 +124,7 @@ export function Button({ title, onPress, variant = 'primary', disabled, loading,
         small && styles.buttonSmall,
         { backgroundColor: c.bg },
         c.border ? { borderWidth: 1.5, borderColor: c.border } : null,
-        (variant === 'primary' || variant === 'gold') && !inactive ? shadow(1) : null,
+        (variant === 'primary' || variant === 'gold') && !inactive ? sh(1) : null,
         inactive && styles.buttonDisabled,
         pressed && !inactive && { transform: [{ scale: 0.985 }], opacity: 0.92 },
         style,
@@ -136,7 +146,9 @@ export function Button({ title, onPress, variant = 'primary', disabled, loading,
 export function Card({ children, style, onPress, accessibilityLabel, flat }: {
   children: ReactNode; style?: StyleProp<ViewStyle>; onPress?: () => void; accessibilityLabel?: string; flat?: boolean;
 }) {
-  const base = [styles.card, !flat && shadow(1), style];
+  const styles = useStyles(makeStyles);
+  const sh = useShadow();
+  const base = [styles.card, !flat && sh(1), style];
   if (onPress) {
     return (
       <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={accessibilityLabel}
@@ -149,10 +161,12 @@ export function Card({ children, style, onPress, accessibilityLabel, flat }: {
 }
 
 export function Title({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) {
+  const styles = useStyles(makeStyles);
   return <Text style={[styles.title, style]} accessibilityRole="header">{children}</Text>;
 }
 
 export function SectionTitle({ children, action }: { children: ReactNode; action?: ReactNode }) {
+  const styles = useStyles(makeStyles);
   return (
     <View style={styles.sectionRow}>
       <Text style={styles.sectionTitle} accessibilityRole="header">{children}</Text>
@@ -161,15 +175,21 @@ export function SectionTitle({ children, action }: { children: ReactNode; action
   );
 }
 
-export function Eyebrow({ children, color = colors.accentDark }: { children: ReactNode; color?: string }) {
-  return <Text style={[styles.eyebrow, { color }]}>{children}</Text>;
+export function Eyebrow({ children, color }: { children: ReactNode; color?: string }) {
+  const colors = useColors();
+  const styles = useStyles(makeStyles);
+  return <Text style={[styles.eyebrow, { color: color ?? colors.accentDark }]}>{children}</Text>;
 }
 
 export function Body({ children, muted, style, strong }: { children: ReactNode; muted?: boolean; strong?: boolean; style?: StyleProp<TextStyle> }) {
+  const colors = useColors();
+  const styles = useStyles(makeStyles);
   return <Text style={[styles.body, muted && { color: colors.textMuted }, strong && styles.strong, style]}>{children}</Text>;
 }
 
 export function InfoRow({ label, value, icon }: { label: string; value: ReactNode; icon?: IconName }) {
+  const colors = useColors();
+  const styles = useStyles(makeStyles);
   return (
     <View style={styles.infoRow}>
       <View style={styles.infoLabelWrap}>
@@ -183,19 +203,23 @@ export function InfoRow({ label, value, icon }: { label: string; value: ReactNod
 
 /** Fait clé avec icône (distance, dénivelé, horaire…). */
 export function Fact({ icon, label, light }: { icon: IconName; label: string; light?: boolean }) {
+  const colors = useColors();
+  const styles = useStyles(makeStyles);
   return (
     <View style={[styles.fact, light && styles.factLight]}>
-      <Icon name={icon} size={14} color={light ? colors.accentLight : colors.secondary} />
+      <Icon name={icon} size={14} color={light ? colors.accentLight : colors.link} />
       <Text style={[styles.factText, light && { color: colors.onPrimary }]}>{label}</Text>
     </View>
   );
 }
 
 export function Divider({ style }: { style?: StyleProp<ViewStyle> }) {
+  const styles = useStyles(makeStyles);
   return <View style={[styles.divider, style]} />;
 }
 
 export function Placeholder({ label, height = 140 }: { label: string; height?: number }) {
+  const styles = useStyles(makeStyles);
   return (
     <View style={[styles.placeholder, { height }]}>
       <Text style={styles.placeholderText}>{label}</Text>
@@ -204,6 +228,8 @@ export function Placeholder({ label, height = 140 }: { label: string; height?: n
 }
 
 export function ProgressBar({ value, max, tone = 'accent' }: { value: number; max: number; tone?: 'accent' | 'primary' | 'success' }) {
+  const colors = useColors();
+  const styles = useStyles(makeStyles);
   const pct = max > 0 ? Math.min(1, Math.max(0, value / max)) : 0;
   const fill = tone === 'accent' ? colors.accent : tone === 'success' ? colors.success : colors.secondary;
   return (
@@ -214,8 +240,11 @@ export function ProgressBar({ value, max, tone = 'accent' }: { value: number; ma
 }
 
 export function StatTile({ icon, label, value, sub }: { icon: IconName; label: string; value: string; sub?: string }) {
+  const colors = useColors();
+  const styles = useStyles(makeStyles);
+  const sh = useShadow();
   return (
-    <View style={[styles.statTile, shadow(1)]}>
+    <View style={[styles.statTile, sh(1)]}>
       <View style={styles.statIcon}><Icon name={icon} size={18} color={colors.accentDark} /></View>
       <Text style={styles.statValue}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
@@ -225,17 +254,19 @@ export function StatTile({ icon, label, value, sub }: { icon: IconName; label: s
 }
 
 type Tone = 'neutral' | 'success' | 'warning' | 'danger' | 'accent' | 'night';
-const toneStyle: Record<Tone, { bg: string; fg: string }> = {
-  neutral: { bg: '#E8EDF3', fg: colors.secondary },
+const toneStyle = (colors: Colors): Record<Tone, { bg: string; fg: string }> => ({
+  neutral: { bg: colors.neutralBg, fg: colors.neutralFg },
   success: { bg: colors.successBg, fg: colors.success },
   warning: { bg: colors.warningBg, fg: colors.warning },
   danger: { bg: colors.dangerBg, fg: colors.danger },
   accent: { bg: colors.accentSoft, fg: colors.accentDark },
   night: { bg: 'rgba(11,22,38,0.72)', fg: colors.accentLight },
-};
+});
 
 export function Badge({ label, tone = 'neutral', icon }: { label: string; tone?: Tone; icon?: IconName }) {
-  const t = toneStyle[tone];
+  const colors = useColors();
+  const styles = useStyles(makeStyles);
+  const t = toneStyle(colors)[tone];
   return (
     <View style={[styles.badge, { backgroundColor: t.bg }]}>
       {icon ? <Icon name={icon} size={12} color={t.fg} /> : <View style={[styles.badgeDot, { backgroundColor: t.fg }]} />}
@@ -250,7 +281,9 @@ const bannerIcon: Record<Tone, IconName> = {
 };
 
 export function Banner({ message, tone = 'danger', title }: { message: string; tone?: Tone; title?: string }) {
-  const t = toneStyle[tone];
+  const colors = useColors();
+  const styles = useStyles(makeStyles);
+  const t = toneStyle(colors)[tone];
   return (
     <View style={[styles.banner, { backgroundColor: t.bg }]} accessibilityRole="alert" accessibilityLiveRegion="polite">
       <Icon name={bannerIcon[tone]} size={20} color={t.fg} />
@@ -263,10 +296,14 @@ export function Banner({ message, tone = 'danger', title }: { message: string; t
 }
 
 export function Loading() {
+  const colors = useColors();
+  const styles = useStyles(makeStyles);
   return <View style={styles.center}><ActivityIndicator size="large" color={colors.accent} /></View>;
 }
 
 export function Empty({ title, message, action, icon = 'moon-outline' }: { title: string; message?: string; action?: ReactNode; icon?: IconName }) {
+  const colors = useColors();
+  const styles = useStyles(makeStyles);
   return (
     <View style={styles.empty}>
       <View style={styles.emptyIcon}><Icon name={icon} size={30} color={colors.accentDark} /></View>
@@ -281,6 +318,8 @@ export function Empty({ title, message, action, icon = 'moon-outline' }: { title
 // Formulaires
 // ---------------------------------------------------------------------------
 export function Field({ label, error, hint, icon, ...props }: TextInputProps & { label: string; error?: string; hint?: string; icon?: IconName }) {
+  const colors = useColors();
+  const styles = useStyles(makeStyles);
   const [focused, setFocused] = useState(false);
   return (
     <View style={styles.field}>
@@ -291,7 +330,7 @@ export function Field({ label, error, hint, icon, ...props }: TextInputProps & {
         focused && styles.inputFocused,
         !!error && { borderColor: colors.danger },
       ]}>
-        {icon ? <Icon name={icon} size={18} color={focused ? colors.secondary : colors.textFaint} /> : null}
+        {icon ? <Icon name={icon} size={18} color={focused ? colors.link : colors.textFaint} /> : null}
         <TextInput
           placeholderTextColor={colors.textFaint}
           accessibilityLabel={label}
@@ -310,6 +349,8 @@ export function Field({ label, error, hint, icon, ...props }: TextInputProps & {
 }
 
 export function Checkbox({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: ReactNode }) {
+  const colors = useColors();
+  const styles = useStyles(makeStyles);
   return (
     <Pressable onPress={() => { tap(); onChange(!checked); }} accessibilityRole="checkbox" accessibilityState={{ checked }}
       style={styles.checkboxRow} hitSlop={6}>
@@ -324,6 +365,8 @@ export function Checkbox({ checked, onChange, label }: { checked: boolean; onCha
 export function Stepper({ value, min, max, onChange, label }: {
   value: number; min: number; max: number; onChange: (v: number) => void; label: string;
 }) {
+  const colors = useColors();
+  const styles = useStyles(makeStyles);
   const btn = (delta: number, icon: IconName, a11y: string, disabled: boolean) => (
     <Pressable style={[styles.stepBtn, disabled && { opacity: 0.35 }]} disabled={disabled} accessibilityLabel={a11y}
       onPress={() => { tap(); onChange(Math.min(max, Math.max(min, value + delta))); }}>
@@ -351,6 +394,8 @@ export function Stepper({ value, min, max, onChange, label }: {
 export function Chips<T extends string>({ options, value, onChange }: {
   options: { value: T; label: string }[]; value: T; onChange: (v: T) => void;
 }) {
+  const colors = useColors();
+  const styles = useStyles(makeStyles);
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm, paddingVertical: 2 }}>
       {options.map((o) => {
@@ -368,15 +413,17 @@ export function Chips<T extends string>({ options, value, onChange }: {
 }
 
 export function LinkText({ children, onPress, icon }: { children: ReactNode; onPress: () => void; icon?: IconName }) {
+  const colors = useColors();
+  const styles = useStyles(makeStyles);
   return (
     <Pressable onPress={onPress} accessibilityRole="link" hitSlop={8} style={styles.link}>
-      {icon ? <Icon name={icon} size={16} color={colors.secondary} /> : null}
+      {icon ? <Icon name={icon} size={16} color={colors.link} /> : null}
       <Text style={styles.linkText}>{children}</Text>
     </Pressable>
   );
 }
 
-export const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingBottom: spacing.xxl * 2, gap: spacing.md },
   footer: {
@@ -417,15 +464,15 @@ export const styles = StyleSheet.create({
   infoLabel: { fontFamily: fonts.regular, fontSize: font.small, color: colors.textMuted },
   infoValue: { fontFamily: fonts.semibold, fontSize: font.small, color: colors.text, flexShrink: 1, textAlign: 'right' },
   fact: {
-    flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#EEF2F7', borderRadius: radius.pill,
+    flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: colors.chip, borderRadius: radius.pill,
     paddingHorizontal: 10, paddingVertical: 5,
   },
   factLight: { backgroundColor: 'rgba(255,255,255,0.14)' },
-  factText: { fontFamily: fonts.medium, fontSize: 13, color: colors.secondary },
+  factText: { fontFamily: fonts.medium, fontSize: 13, color: colors.link },
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginVertical: spacing.xs },
   placeholder: { backgroundColor: colors.placeholder, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
   placeholderText: { color: colors.text, fontFamily: fonts.semibold, fontSize: font.small },
-  progressTrack: { height: 8, borderRadius: 4, backgroundColor: '#E6EBF1', overflow: 'hidden' },
+  progressTrack: { height: 8, borderRadius: 4, backgroundColor: colors.track, overflow: 'hidden' },
   progressFill: { height: 8, borderRadius: 4 },
   statTile: {
     flexBasis: '47%', flexGrow: 1, backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg, gap: 2,
@@ -456,7 +503,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.surface, borderWidth: 1.5,
     borderColor: colors.border, borderRadius: radius.md, minHeight: 52, paddingHorizontal: spacing.md,
   },
-  inputFocused: { borderColor: colors.secondary, backgroundColor: '#FCFDFE' },
+  inputFocused: { borderColor: colors.link, backgroundColor: colors.surface },
   input: { flex: 1, fontFamily: fonts.regular, fontSize: font.body, color: colors.text, paddingVertical: 12, minHeight: 48 },
   fieldMsg: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   fieldError: { color: colors.danger, fontFamily: fonts.medium, fontSize: font.tiny },
@@ -483,5 +530,10 @@ export const styles = StyleSheet.create({
   chipActive: { backgroundColor: colors.secondary, borderColor: colors.secondary },
   chipText: { fontFamily: fonts.medium, fontSize: 13, color: colors.text },
   link: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', minHeight: 32 },
-  linkText: { fontFamily: fonts.medium, fontSize: font.small, color: colors.secondary, textDecorationLine: 'underline' },
+  linkText: { fontFamily: fonts.medium, fontSize: font.small, color: colors.link, textDecorationLine: 'underline' },
 });
+
+/** Styles partagés (titres, textes d'aide…) pour les écrans, adaptés au thème actif. */
+export function useUiStyles() {
+  return useStyles(makeStyles);
+}
