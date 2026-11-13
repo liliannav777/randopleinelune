@@ -24,7 +24,7 @@ export default function Gallery() {
       ) : null}
       {data?.map((e) => (
         <View key={e.id} style={[s.card, shadow(2)]}>
-          <EventCover uri={e.cover_image} height={230} seed={e.id} rounded={false}>
+          <EventCover uri={e.cover_image} height={230} seed={e.id} hint={`${e.title} ${e.meeting_point}`} rounded={false}>
             <LinearGradient colors={['rgba(11,22,38,0)', 'rgba(11,22,38,0.85)']} locations={[0.45, 1]} style={StyleSheet.absoluteFill} />
             <View style={s.caption}>
               <Text style={s.date}>{capitalize(formatDate(e.starts_at))}</Text>

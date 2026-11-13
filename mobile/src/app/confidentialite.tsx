@@ -53,8 +53,9 @@ export default function Privacy() {
         <>
           <SectionTitle>Crédits photos</SectionTitle>
           <Body muted style={{ fontSize: 13, lineHeight: 19 }}>
-            Photos du Beaujolais issues de Wikimedia Commons, utilisées selon leur licence libre. Touchez une
-            photo pour voir sa source.
+            Photos du Beaujolais issues de Wikimedia Commons, utilisées selon leur licence libre (Creative
+            Commons). Elles ont été recadrées, redimensionnées et parfois assombries pour l’application.
+            Touchez une photo pour voir sa source, ou la licence pour en lire les conditions.
           </Body>
           {PHOTOS.map((p) => (
             <Pressable key={p.id} onPress={() => Linking.openURL(p.sourceUrl)} accessibilityRole="link">

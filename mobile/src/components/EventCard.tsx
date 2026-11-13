@@ -25,10 +25,12 @@ export function eventStatusBadge(e: HikeEvent) {
  * Photo de la sortie ; à défaut, une photo du Beaujolais intégrée à l'application
  * (teintée bleu nuit), choisie de façon stable selon la sortie.
  */
-export function EventCover({ uri, height = 160, seed = 'rpl', rounded = true, children }: {
+export function EventCover({ uri, height = 160, seed = 'rpl', hint, rounded = true, children }: {
   uri: string | null; height?: number; seed?: string; rounded?: boolean; children?: ReactNode;
+  /** Titre et lieu de la sortie, pour choisir une photo du bon endroit. */
+  hint?: string;
 }) {
-  const fallback = uri ? undefined : photoFor(seed);
+  const fallback = uri ? undefined : photoFor(seed, hint);
   return (
     <View style={[{ height, overflow: 'hidden', backgroundColor: colors.primary }, rounded && { borderRadius: radius.md }]}>
       {uri ? (
@@ -93,7 +95,7 @@ export function EventCard({ event, onPress }: { event: HikeEvent; onPress: () =>
   return (
     <Card onPress={onPress} style={{ padding: 0, overflow: 'hidden', gap: 0 }}
       accessibilityLabel={`${event.title}, ${formatDate(event.starts_at)}`}>
-      <EventCover uri={event.cover_image} height={150} seed={event.id} rounded={false}>
+      <EventCover uri={event.cover_image} height={150} seed={event.id} hint={`${event.title} ${event.meeting_point}`} rounded={false}>
         <View style={s.coverTop}>
           <DateBadge iso={event.starts_at} />
           <View style={s.price}><Text style={s.priceText}>{formatTariff(event.price_cents)}</Text></View>

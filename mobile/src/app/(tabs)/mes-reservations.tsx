@@ -13,7 +13,7 @@ function ReservationRow({ r, onPress, past }: { r: Reservation; onPress: () => v
     <Card onPress={onPress} style={[s.row, past && { opacity: 0.75 }]}
       accessibilityLabel={`${r.event.title}, ${r.participant_count} participant(s)`}>
       <View style={s.thumb}>
-        <EventCover uri={r.event.cover_image} height={84} seed={r.event.id} />
+        <EventCover uri={r.event.cover_image} height={84} seed={r.event.id} hint={`${r.event.title} ${r.event.meeting_point}`} />
         <View style={s.thumbDate}><DateBadge iso={r.event.starts_at} /></View>
       </View>
       <View style={{ flex: 1, gap: 4 }}>

@@ -16,7 +16,7 @@ import { colors, fonts, radius, shadow, spacing } from '@/theme';
 function Hero({ event, onBack }: { event: HikeEvent; onBack: () => void }) {
   const insets = useSafeAreaInsets();
   return (
-    <EventCover uri={event.cover_image} height={300 + insets.top} seed={event.id} rounded={false}>
+    <EventCover uri={event.cover_image} height={300 + insets.top} seed={event.id} hint={`${event.title} ${event.meeting_point}`} rounded={false}>
       <LinearGradient colors={['rgba(11,22,38,0.55)', 'rgba(11,22,38,0)', 'rgba(11,22,38,0.88)']}
         locations={[0, 0.35, 1]} style={StyleSheet.absoluteFill} />
       <View style={[s.heroTop, { top: insets.top + spacing.sm }]}>

@@ -98,7 +98,7 @@ export default function Reserve() {
         )}
       >
         <Card style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'center' }}>
-          <View style={{ width: 64 }}><EventCover uri={event.cover_image} height={64} seed={event.id} /></View>
+          <View style={{ width: 64 }}><EventCover uri={event.cover_image} height={64} seed={event.id} hint={`${event.title} ${event.meeting_point}`} /></View>
           <View style={{ flex: 1, gap: 2 }}>
             <Text style={{ fontFamily: fonts.display, fontSize: 17, color: colors.text }} numberOfLines={2}>{event.title}</Text>
             <Text style={styles.fieldHint}>{capitalize(formatDate(event.starts_at))} · {formatTime(event.starts_at)}</Text>
