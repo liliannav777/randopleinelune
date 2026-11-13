@@ -1,9 +1,11 @@
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import {
   capitalize, difficultyLabel, formatDate, formatDistance, formatTariff, formatTime,
 } from '@/lib/format';
+import { photoFor } from '@/lib/photos';
 import type { HikeEvent } from '@/lib/types';
 import { colors, fonts, radius, spacing } from '@/theme';
 import { NightSky } from './art';
@@ -19,14 +21,24 @@ export function eventStatusBadge(e: HikeEvent) {
   return <Badge label="Inscriptions ouvertes" tone="success" />;
 }
 
-/** Photo de la sortie, ou paysage nocturne propre à la sortie s'il n'y a pas de photo. */
+/**
+ * Photo de la sortie ; à défaut, une photo du Beaujolais intégrée à l'application
+ * (teintée bleu nuit), choisie de façon stable selon la sortie.
+ */
 export function EventCover({ uri, height = 160, seed = 'rpl', rounded = true, children }: {
   uri: string | null; height?: number; seed?: string; rounded?: boolean; children?: ReactNode;
 }) {
+  const fallback = uri ? undefined : photoFor(seed);
   return (
     <View style={[{ height, overflow: 'hidden', backgroundColor: colors.primary }, rounded && { borderRadius: radius.md }]}>
       {uri ? (
         <Image source={{ uri }} style={StyleSheet.absoluteFill} contentFit="cover" accessibilityIgnoresInvertColors transition={200} />
+      ) : fallback ? (
+        <>
+          <Image source={fallback.source} style={StyleSheet.absoluteFill} contentFit="cover" accessibilityIgnoresInvertColors />
+          <LinearGradient colors={['rgba(11,22,38,0.30)', 'rgba(20,36,58,0.10)', 'rgba(11,22,38,0.45)']}
+            style={StyleSheet.absoluteFill} pointerEvents="none" />
+        </>
       ) : (
         <NightSky height={Math.max(120, Math.round(height * 0.9))} seed={seed} stars={28} />
       )}

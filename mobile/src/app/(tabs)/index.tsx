@@ -1,12 +1,15 @@
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { NightSky } from '@/components/art';
+import { MoonMark, NightSky } from '@/components/art';
 import { EventCard } from '@/components/EventCard';
 import { Banner, Body, Button, Card, Icon, LinkText, Screen, SectionTitle, type IconName } from '@/components/ui';
 import { listUpcomingEvents } from '@/lib/api';
 import { capitalize, formatDate, formatTime } from '@/lib/format';
 import { useMyReservations } from '@/lib/myReservations';
+import { heroPhoto } from '@/lib/photos';
 import { useFocusData } from '@/lib/useAsync';
 import { colors, fonts, radius, spacing } from '@/theme';
 
@@ -18,14 +21,25 @@ const PROMISES: { icon: IconName; title: string; text: string }[] = [
 
 function Hero({ onDiscover }: { onDiscover: () => void }) {
   const insets = useSafeAreaInsets();
+  const photo = heroPhoto();
   return (
     <View style={[s.hero, { paddingTop: insets.top + spacing.xl }]}>
-      <NightSky height={460} seed="accueil" moon={{ x: 300, y: 92, r: 30 }} stars={70} />
-      <Text style={s.heroEyebrow}>LYON · BEAUJOLAIS</Text>
+      {photo ? (
+        <>
+          <Image source={photo.source} style={StyleSheet.absoluteFill} contentFit="cover" accessibilityIgnoresInvertColors />
+          <LinearGradient colors={['rgba(11,22,38,0.78)', 'rgba(11,22,38,0.35)', 'rgba(11,22,38,0.92)']}
+            locations={[0, 0.45, 1]} style={StyleSheet.absoluteFill} pointerEvents="none" />
+        </>
+      ) : <NightSky height={460} seed="accueil" moon={{ x: 300, y: 92, r: 30 }} stars={70} />}
+      <View style={s.heroBrand}>
+        <MoonMark size={30} />
+        <Text style={s.heroEyebrow}>LYON · BEAUJOLAIS</Text>
+      </View>
       <Text style={s.heroTitle} accessibilityRole="header">Rando{'\n'}Pleine Lune</Text>
       <Text style={s.heroTagline}>Une autre expérience.</Text>
       <Text style={s.heroText}>Randonnées nocturnes entre vignes et pierres dorées, à la lumière de la lune.</Text>
       <Button variant="gold" icon="compass-outline" title="Voir les randonnées" onPress={onDiscover} style={s.heroCta} />
+      {photo ? <Text style={s.heroCredit}>Photo : {photo.caption} — {photo.author}</Text> : null}
     </View>
   );
 }
@@ -103,6 +117,11 @@ const s = StyleSheet.create({
   hero: {
     paddingHorizontal: spacing.xl, paddingBottom: spacing.xxl + spacing.xl, overflow: 'hidden',
     borderBottomLeftRadius: radius.xl, borderBottomRightRadius: radius.xl, backgroundColor: colors.primary,
+  },
+  heroBrand: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  heroCredit: {
+    position: 'absolute', right: spacing.lg, bottom: spacing.xl + 4, fontFamily: fonts.regular, fontSize: 10,
+    color: 'rgba(255,255,255,0.65)', maxWidth: 240, textAlign: 'right',
   },
   heroEyebrow: { fontFamily: fonts.semibold, fontSize: 12, letterSpacing: 2.4, color: colors.accentLight },
   heroTitle: { fontFamily: fonts.displayBold, fontSize: 44, lineHeight: 48, color: colors.onPrimary, marginTop: spacing.sm },

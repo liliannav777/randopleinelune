@@ -1,6 +1,8 @@
 import { useRouter } from 'expo-router';
+import { Linking, Pressable, Text } from 'react-native';
 import { Body, Header, Screen, SectionTitle } from '@/components/ui';
 import { getSettings } from '@/lib/api';
+import { PHOTOS } from '@/lib/photos';
 import { useFocusData } from '@/lib/useAsync';
 
 // Texte de travail à faire valider avant la mise en production
@@ -46,6 +48,24 @@ export default function Privacy() {
         Vous pouvez demander l’accès, la rectification ou la suppression de vos données en contactant {org}
         {contact ? ` (${contact})` : ''}. Vous pouvez aussi introduire une réclamation auprès de la CNIL.
       </Body>
+
+      {PHOTOS.length > 0 ? (
+        <>
+          <SectionTitle>Crédits photos</SectionTitle>
+          <Body muted style={{ fontSize: 13, lineHeight: 19 }}>
+            Photos du Beaujolais issues de Wikimedia Commons, utilisées selon leur licence libre. Touchez une
+            photo pour voir sa source.
+          </Body>
+          {PHOTOS.map((p) => (
+            <Pressable key={p.id} onPress={() => Linking.openURL(p.sourceUrl)} accessibilityRole="link">
+              <Body style={{ fontSize: 13, lineHeight: 19 }}>
+                « {p.caption} » — {p.author},{' '}
+                <Text style={{ textDecorationLine: 'underline' }} onPress={() => Linking.openURL(p.licenseUrl)}>{p.license}</Text>
+              </Body>
+            </Pressable>
+          ))}
+        </>
+      ) : null}
 
       <SectionTitle>Hébergement</SectionTitle>
       <Body muted>
