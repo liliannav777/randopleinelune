@@ -1,18 +1,15 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { NightSky } from '@/components/art';
 import { eventStatusBadge } from '@/components/EventCard';
-import {
-  Banner, Button, Empty, Header, Icon, IconButton, Loading, ProgressBar, Screen, SectionTitle, StatTile, type IconName,
-} from '@/components/ui';
+import { Banner, Button, Empty, Header, LinkText, Loading, ProgressBar, Screen } from '@/components/ui';
 import { adminEventStats, adminListEvents } from '@/lib/api';
 import { useAdminAuth } from '@/lib/adminAuth';
 import { capitalize, formatDate, formatPrice, formatShortDate, formatTime } from '@/lib/format';
 import type { EventStats, HikeEvent } from '@/lib/types';
+import { useStyles } from '@/lib/theme';
 import { useFocusData } from '@/lib/useAsync';
-import { fonts, radius, shadow, spacing, type Colors } from '@/theme';
-import { useColors, useStyles } from '@/lib/theme';
+import { fonts, spacing, type Colors } from '@/theme';
 
 function pickDefault(events: HikeEvent[]): HikeEvent | undefined {
   const now = Date.now() - 12 * 3600 * 1000; // une sortie reste « en cours » 12 h
@@ -21,22 +18,18 @@ function pickDefault(events: HikeEvent[]): HikeEvent | undefined {
     ?? events[events.length - 1];
 }
 
-function Action({ icon, title, onPress, primary }: { icon: IconName; title: string; onPress: () => void; primary?: boolean }) {
-  const colors = useColors();
+function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   const s = useStyles(makeStyles);
   return (
-    <Pressable onPress={onPress} accessibilityRole="button"
-      style={({ pressed }) => [s.action, primary && s.actionPrimary, shadow(1), pressed && { opacity: 0.85 }]}>
-      <View style={[s.actionIcon, primary && { backgroundColor: colors.accent }]}>
-        <Icon name={icon} size={22} color={primary ? colors.primary : colors.accentDark} />
-      </View>
-      <Text style={[s.actionText, primary && { color: colors.onPrimary }]}>{title}</Text>
-    </Pressable>
+    <View style={s.stat}>
+      <Text style={s.statValue}>{value}</Text>
+      <Text style={s.statLabel}>{label}</Text>
+      {sub ? <Text style={s.statSub}>{sub}</Text> : null}
+    </View>
   );
 }
 
 export default function AdminDashboard() {
-  const colors = useColors();
   const s = useStyles(makeStyles);
   const router = useRouter();
   const { signOut } = useAdminAuth();
@@ -50,16 +43,17 @@ export default function AdminDashboard() {
   useEffect(() => {
     let alive = true;
     if (selectedEventId) {
-      adminEventStats(selectedEventId).then((s) => { if (alive) setLoadedStats(s); }).catch(() => undefined);
+      adminEventStats(selectedEventId).then((st) => { if (alive) setLoadedStats(st); }).catch(() => undefined);
     }
     return () => { alive = false; };
   }, [selectedEventId, seatsTaken, refreshing]);
   const stats = loadedStats?.event_id === selectedEventId ? loadedStats : null;
+  const dash = '–';
 
   return (
     <Screen
-      header={<Header title="Tableau de bord" subtitle="Espace organisateur" seed="admin" onBack={() => router.replace('/')}
-        right={<IconButton icon="settings-outline" onPress={() => router.push('/admin/parametres')} label="Paramètres" />} />}
+      header={<Header title="Organisation" onBack={() => router.replace('/')}
+        right={<LinkText onPress={() => router.push('/admin/parametres')}>Paramètres</LinkText>} />}
       refreshing={refreshing}
       onRefresh={refresh}
     >
@@ -74,57 +68,55 @@ export default function AdminDashboard() {
             return (
               <Pressable key={e.id} onPress={() => setSelectedId(e.id)} accessibilityRole="button"
                 accessibilityState={{ selected: active }} style={[s.pill, active && s.pillActive]}>
-                <Text style={[s.pillDate, active && { color: colors.accentLight }]}>{formatShortDate(e.starts_at)}</Text>
-                <Text style={[s.pillTitle, active && { color: colors.onPrimary }]} numberOfLines={1}>{e.title}</Text>
+                <Text style={[s.pillText, active && s.pillTextActive]} numberOfLines={1}>
+                  {formatShortDate(e.starts_at)} · {e.title}
+                </Text>
               </Pressable>
             );
           })}
         </ScrollView>
       ) : null}
 
-      {events?.length === 0 ? <Empty title="Aucune sortie" message="Créez votre première randonnée." /> : null}
+      {events?.length === 0 ? <Empty title="Aucune sortie pour l’instant" message="Commencez par créer votre première randonnée." /> : null}
 
       {selected ? (
         <>
-          <View style={s.eventCard}>
-            <NightSky height={200} seed={selected.id} moon={{ x: 350, y: 40, r: 14 }} stars={30} />
-            {eventStatusBadge(selected)}
+          <View style={{ gap: 2, marginTop: spacing.sm }}>
+            {eventStatusBadge(selected, true)}
             <Text style={s.eventTitle}>{selected.title}</Text>
             <Text style={s.eventMeta}>
-              {capitalize(formatDate(selected.starts_at))} · {formatTime(selected.starts_at)} · {selected.meeting_point}
+              {capitalize(formatDate(selected.starts_at))}, {formatTime(selected.starts_at)} — {selected.meeting_point}
             </Text>
-            <View style={{ gap: 6, marginTop: spacing.sm }}>
-              <View style={s.capRow}>
-                <Text style={s.capText}>{selected.seats_taken} / {selected.capacity} places réservées</Text>
-                <Text style={s.capText}>{Math.max(0, selected.capacity - selected.seats_taken)} libres</Text>
-              </View>
-              <ProgressBar value={selected.seats_taken} max={selected.capacity} />
-            </View>
           </View>
 
-          <View style={s.grid}>
-            <StatTile icon="receipt-outline" label="Réservations" value={stats ? String(stats.reservations) : '…'} />
-            <StatTile icon="person-circle-outline" label="Présents" value={stats ? String(stats.present) : '…'}
-              sub={stats ? `sur ${stats.seats_taken} attendus` : undefined} />
-            <StatTile icon="checkmark-done-outline" label="Paiements reçus" value={stats ? String(stats.payments_received) : '…'}
-              sub={stats ? `sur ${stats.reservations} réservations` : undefined} />
-            <StatTile icon="wallet-outline" label="Encaissé" value={stats ? formatPrice(stats.amount_paid_cents) : '…'}
-              sub={stats ? `attendu ${formatPrice(stats.amount_due_cents)}` : undefined} />
+          <View style={{ gap: 6 }}>
+            <Text style={s.cap}>
+              {selected.seats_taken} places réservées sur {selected.capacity}
+              {selected.capacity > selected.seats_taken ? ` · ${selected.capacity - selected.seats_taken} libres` : ' · complet'}
+            </Text>
+            <ProgressBar value={selected.seats_taken} max={selected.capacity} />
           </View>
 
-          <SectionTitle>Actions</SectionTitle>
-          <View style={s.grid}>
-            <Action primary icon="scan-outline" title="Scanner un QR code" onPress={() => router.push(`/admin/scanner/${selected.id}`)} />
-            <Action icon="people-outline" title="Participants" onPress={() => router.push(`/admin/participants/${selected.id}`)} />
-            <Action icon="create-outline" title="Modifier la sortie" onPress={() => router.push(`/admin/sortie/${selected.id}`)} />
-            <Action icon="add-circle-outline" title="Nouvelle sortie" onPress={() => router.push('/admin/sortie/nouvelle')} />
+          <View style={s.stats}>
+            <Stat label="réservations" value={stats ? String(stats.reservations) : dash} />
+            <Stat label="présents" value={stats ? String(stats.present) : dash} sub={stats ? `sur ${stats.seats_taken}` : undefined} />
+            <Stat label="payées" value={stats ? String(stats.payments_received) : dash} sub={stats ? `sur ${stats.reservations}` : undefined} />
+            <Stat label="encaissé" value={stats ? formatPrice(stats.amount_paid_cents) : dash}
+              sub={stats ? `sur ${formatPrice(stats.amount_due_cents)}` : undefined} />
           </View>
+
+          <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
+            <Button variant="gold" title="Scanner les billets" onPress={() => router.push(`/admin/scanner/${selected.id}`)} />
+            <Button variant="secondary" title="Liste des participants" onPress={() => router.push(`/admin/participants/${selected.id}`)} />
+            <Button variant="secondary" title="Modifier la sortie" onPress={() => router.push(`/admin/sortie/${selected.id}`)} />
+          </View>
+          <LinkText onPress={() => router.push('/admin/sortie/nouvelle')}>Créer une nouvelle sortie</LinkText>
         </>
       ) : (
-        <Button variant="gold" icon="add-circle-outline" title="Nouvelle randonnée" onPress={() => router.push('/admin/sortie/nouvelle')} />
+        <Button variant="gold" title="Créer une sortie" onPress={() => router.push('/admin/sortie/nouvelle')} />
       )}
 
-      <Button variant="ghost" icon="log-out-outline" title="Se déconnecter" onPress={signOut} style={{ marginTop: spacing.lg }} />
+      <Button variant="ghost" title="Se déconnecter" onPress={signOut} style={{ marginTop: spacing.xl }} />
     </Screen>
   );
 }
@@ -132,28 +124,21 @@ export default function AdminDashboard() {
 const makeStyles = (colors: Colors) => StyleSheet.create({
   selector: { gap: spacing.sm, paddingHorizontal: spacing.lg, paddingVertical: 2 },
   pill: {
-    backgroundColor: colors.surface, borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
-    borderWidth: 1.5, borderColor: colors.border, maxWidth: 200,
+    borderRadius: 8, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, maxWidth: 240,
+    borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surface,
   },
   pillActive: { backgroundColor: colors.secondary, borderColor: colors.secondary },
-  pillDate: { fontFamily: fonts.semibold, fontSize: 11, letterSpacing: 0.8, color: colors.accentDark, textTransform: 'uppercase' },
-  pillTitle: { fontFamily: fonts.medium, fontSize: 14, color: colors.text },
-  eventCard: {
-    borderRadius: radius.lg, overflow: 'hidden', padding: spacing.lg, gap: spacing.xs, backgroundColor: colors.primary,
-    paddingBottom: spacing.xl,
+  pillText: { fontFamily: fonts.regular, fontSize: 14, color: colors.text },
+  pillTextActive: { color: colors.onPrimary, fontFamily: fonts.medium },
+  eventTitle: { fontFamily: fonts.display, fontSize: 22, lineHeight: 28, color: colors.text, marginTop: 4 },
+  eventMeta: { fontFamily: fonts.regular, fontSize: 14, color: colors.textMuted },
+  cap: { fontFamily: fonts.regular, fontSize: 14, color: colors.text, marginTop: spacing.sm },
+  stats: {
+    flexDirection: 'row', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.borderStrong, borderRadius: 12,
+    backgroundColor: colors.surface, paddingVertical: spacing.md, marginTop: spacing.sm,
   },
-  eventTitle: { fontFamily: fonts.display, fontSize: 22, lineHeight: 28, color: colors.onPrimary, marginTop: spacing.xs },
-  eventMeta: { fontFamily: fonts.regular, fontSize: 13, color: colors.onPrimaryMuted },
-  capRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  capText: { fontFamily: fonts.medium, fontSize: 12, color: colors.onPrimary },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
-  action: {
-    flexBasis: '47%', flexGrow: 1, backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg,
-    gap: spacing.md, minHeight: 112,
-  },
-  actionPrimary: { backgroundColor: colors.secondary },
-  actionIcon: {
-    width: 42, height: 42, borderRadius: 21, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center',
-  },
-  actionText: { fontFamily: fonts.semibold, fontSize: 15, color: colors.text },
+  stat: { flex: 1, alignItems: 'center', paddingHorizontal: 2 },
+  statValue: { fontFamily: fonts.semibold, fontSize: 18, color: colors.text },
+  statLabel: { fontFamily: fonts.regular, fontSize: 12, color: colors.textMuted },
+  statSub: { fontFamily: fonts.regular, fontSize: 11, color: colors.textFaint },
 });

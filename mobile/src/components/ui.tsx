@@ -1,4 +1,4 @@
-// Composants d'interface partagés — univers « nuit étoilée » (Spécifications V1 §4).
+// Composants d'interface partagés (Spécifications V1 §4) : sobres, lisibles, les photos portent l'ambiance.
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useState, type ComponentProps, type ReactNode } from 'react';
@@ -7,9 +7,8 @@ import {
   type StyleProp, type TextInputProps, type TextStyle, type ViewStyle,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useColors, useShadow, useStyles } from '@/lib/theme';
-import { font, fonts, MIN_TOUCH, radius, shadow, spacing, type Colors } from '@/theme';
-import { NightSky } from './art';
+import { useColors, useStyles } from '@/lib/theme';
+import { font, fonts, MIN_TOUCH, radius, spacing, type Colors } from '@/theme';
 
 export type IconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -38,22 +37,28 @@ export function IconButton({ icon, onPress, label, tone = 'light' }: {
   );
 }
 
-export function Header({ title, subtitle, onBack, right, seed }: {
-  title: string; subtitle?: string; onBack?: () => void; right?: ReactNode; seed?: string;
+/** En-tête de page : titre simple sur le fond de la page. */
+export function Header({ title, subtitle, onBack, right }: {
+  title: string; subtitle?: string; onBack?: () => void; right?: ReactNode;
+  /** Conservé pour compatibilité (n'a plus d'effet). */
+  seed?: string;
 }) {
+  const colors = useColors();
   const styles = useStyles(makeStyles);
   const insets = useSafeAreaInsets();
   return (
-    <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-      <NightSky height={170} seed={seed ?? title} moon={{ x: 255, y: 50, r: 15 }} stars={34} />
+    <View style={[styles.header, { paddingTop: insets.top + spacing.xs }]}>
       <View style={styles.headerRow}>
-        {onBack ? <IconButton icon="chevron-back" onPress={onBack} label="Retour" /> : <View style={styles.headerSpacer} />}
-        <View style={styles.headerSpacer}>{right}</View>
+        {onBack ? (
+          <Pressable onPress={onBack} accessibilityRole="button" accessibilityLabel="Retour" hitSlop={10} style={styles.back}>
+            <Icon name="chevron-back" size={22} color={colors.link} />
+            <Text style={styles.backText}>Retour</Text>
+          </Pressable>
+        ) : <View />}
+        {right}
       </View>
-      <View style={styles.headerText}>
-        {subtitle ? <Text style={styles.headerSubtitle} numberOfLines={1}>{subtitle.toUpperCase()}</Text> : null}
-        <Text style={styles.headerTitle} accessibilityRole="header" numberOfLines={2}>{title}</Text>
-      </View>
+      <Text style={styles.headerTitle} accessibilityRole="header" numberOfLines={2}>{title}</Text>
+      {subtitle ? <Text style={styles.headerSubtitle} numberOfLines={1}>{subtitle}</Text> : null}
     </View>
   );
 }
@@ -108,7 +113,6 @@ export function Button({ title, onPress, variant = 'primary', disabled, loading,
   icon?: IconName; small?: boolean;
 }) {
   const styles = useStyles(makeStyles);
-  const sh = useShadow();
   const colors = useColors();
   const inactive = disabled || loading;
   const c = buttonColors(colors)[variant];
@@ -124,9 +128,8 @@ export function Button({ title, onPress, variant = 'primary', disabled, loading,
         small && styles.buttonSmall,
         { backgroundColor: c.bg },
         c.border ? { borderWidth: 1.5, borderColor: c.border } : null,
-        (variant === 'primary' || variant === 'gold') && !inactive ? sh(1) : null,
         inactive && styles.buttonDisabled,
-        pressed && !inactive && { transform: [{ scale: 0.985 }], opacity: 0.92 },
+        pressed && !inactive && { opacity: 0.8 },
         style,
       ]}
     >
@@ -147,12 +150,11 @@ export function Card({ children, style, onPress, accessibilityLabel, flat }: {
   children: ReactNode; style?: StyleProp<ViewStyle>; onPress?: () => void; accessibilityLabel?: string; flat?: boolean;
 }) {
   const styles = useStyles(makeStyles);
-  const sh = useShadow();
-  const base = [styles.card, !flat && sh(1), style];
+  const base = [styles.card, flat && styles.cardFlat, style];
   if (onPress) {
     return (
       <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={accessibilityLabel}
-        style={({ pressed }) => [...base, pressed && { transform: [{ scale: 0.99 }], opacity: 0.96 }]}>
+        style={({ pressed }) => [...base, pressed && { opacity: 0.85 }]}>
         {children}
       </Pressable>
     );
@@ -206,8 +208,8 @@ export function Fact({ icon, label, light }: { icon: IconName; label: string; li
   const colors = useColors();
   const styles = useStyles(makeStyles);
   return (
-    <View style={[styles.fact, light && styles.factLight]}>
-      <Icon name={icon} size={14} color={light ? colors.accentLight : colors.link} />
+    <View style={styles.fact}>
+      <Icon name={icon} size={14} color={light ? colors.onPrimaryMuted : colors.textFaint} />
       <Text style={[styles.factText, light && { color: colors.onPrimary }]}>{label}</Text>
     </View>
   );
@@ -240,12 +242,10 @@ export function ProgressBar({ value, max, tone = 'accent' }: { value: number; ma
 }
 
 export function StatTile({ icon, label, value, sub }: { icon: IconName; label: string; value: string; sub?: string }) {
-  const colors = useColors();
   const styles = useStyles(makeStyles);
-  const sh = useShadow();
+  void icon;
   return (
-    <View style={[styles.statTile, sh(1)]}>
-      <View style={styles.statIcon}><Icon name={icon} size={18} color={colors.accentDark} /></View>
+    <View style={styles.statTile}>
       <Text style={styles.statValue}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
       {sub ? <Text style={styles.statSub}>{sub}</Text> : null}
@@ -269,7 +269,7 @@ export function Badge({ label, tone = 'neutral', icon }: { label: string; tone?:
   const t = toneStyle(colors)[tone];
   return (
     <View style={[styles.badge, { backgroundColor: t.bg }]}>
-      {icon ? <Icon name={icon} size={12} color={t.fg} /> : <View style={[styles.badgeDot, { backgroundColor: t.fg }]} />}
+      {icon ? <Icon name={icon} size={12} color={t.fg} /> : null}
       <Text style={[styles.badgeText, { color: t.fg }]}>{label}</Text>
     </View>
   );
@@ -301,12 +301,10 @@ export function Loading() {
   return <View style={styles.center}><ActivityIndicator size="large" color={colors.accent} /></View>;
 }
 
-export function Empty({ title, message, action, icon = 'moon-outline' }: { title: string; message?: string; action?: ReactNode; icon?: IconName }) {
-  const colors = useColors();
+export function Empty({ title, message, action }: { title: string; message?: string; action?: ReactNode; icon?: IconName }) {
   const styles = useStyles(makeStyles);
   return (
     <View style={styles.empty}>
-      <View style={styles.emptyIcon}><Icon name={icon} size={30} color={colors.accentDark} /></View>
       <Text style={[styles.sectionTitle, { textAlign: 'center' }]}>{title}</Text>
       {message ? <Body muted style={{ textAlign: 'center' }}>{message}</Body> : null}
       {action}
@@ -370,7 +368,7 @@ export function Stepper({ value, min, max, onChange, label }: {
   const btn = (delta: number, icon: IconName, a11y: string, disabled: boolean) => (
     <Pressable style={[styles.stepBtn, disabled && { opacity: 0.35 }]} disabled={disabled} accessibilityLabel={a11y}
       onPress={() => { tap(); onChange(Math.min(max, Math.max(min, value + delta))); }}>
-      <Icon name={icon} size={22} color={colors.onPrimary} />
+      <Icon name={icon} size={22} color={colors.link} />
     </Pressable>
   );
   return (
@@ -428,34 +426,38 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: spacing.xxl * 2, gap: spacing.md },
   footer: {
     paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.md, backgroundColor: colors.surface, gap: spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, ...shadow(2),
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.borderStrong,
   },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl, minHeight: 160 },
   header: {
-    backgroundColor: colors.primary, paddingHorizontal: spacing.lg, paddingBottom: spacing.xl,
-    borderBottomLeftRadius: radius.xl, borderBottomRightRadius: radius.xl, overflow: 'hidden',
+    backgroundColor: colors.background, paddingHorizontal: spacing.lg, paddingBottom: spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border,
   },
-  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
-  headerSpacer: { minWidth: 44, alignItems: 'flex-end' },
-  headerText: { marginTop: spacing.md, gap: 4 },
-  headerTitle: { color: colors.onPrimary, fontFamily: fonts.display, fontSize: font.title, lineHeight: 32 },
-  headerSubtitle: { color: colors.accentLight, fontFamily: fonts.semibold, fontSize: 11, letterSpacing: 1.6 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 40 },
+  back: { flexDirection: 'row', alignItems: 'center', marginLeft: -6, minHeight: 40 },
+  backText: { fontFamily: fonts.regular, fontSize: font.body, color: colors.link },
+  headerTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 28, lineHeight: 34, marginTop: spacing.xs },
+  headerSubtitle: { color: colors.textMuted, fontFamily: fonts.regular, fontSize: font.small, marginTop: 2 },
   iconButton: {
     width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.12)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.25)',
   },
   iconButtonDark: { backgroundColor: colors.surface, borderColor: colors.border },
   button: {
-    minHeight: 54, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.lg,
+    minHeight: 52, borderRadius: 10, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.lg,
   },
-  buttonSmall: { minHeight: 42, borderRadius: radius.sm + 2, paddingHorizontal: spacing.md },
+  buttonSmall: { minHeight: 42, borderRadius: 8, paddingHorizontal: spacing.md },
   buttonInner: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   buttonDisabled: { opacity: 0.45 },
-  buttonText: { fontFamily: fonts.semibold, fontSize: font.body, letterSpacing: 0.2 },
-  card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg, gap: spacing.sm },
+  buttonText: { fontFamily: fonts.semibold, fontSize: font.body },
+  card: {
+    backgroundColor: colors.surface, borderRadius: 12, padding: spacing.lg, gap: spacing.sm,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.borderStrong,
+  },
+  cardFlat: { borderWidth: 0 },
   title: { fontFamily: fonts.display, fontSize: font.title, lineHeight: 32, color: colors.text },
   sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.md },
-  sectionTitle: { fontFamily: fonts.display, fontSize: font.heading, color: colors.text },
+  sectionTitle: { fontFamily: fonts.semibold, fontSize: 18, color: colors.text },
   eyebrow: { fontFamily: fonts.semibold, fontSize: 11, letterSpacing: 1.6, textTransform: 'uppercase' },
   body: { fontFamily: fonts.regular, fontSize: font.body, color: colors.text, lineHeight: 24 },
   strong: { fontFamily: fonts.semibold },
@@ -463,45 +465,34 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
   infoLabelWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 0 },
   infoLabel: { fontFamily: fonts.regular, fontSize: font.small, color: colors.textMuted },
   infoValue: { fontFamily: fonts.semibold, fontSize: font.small, color: colors.text, flexShrink: 1, textAlign: 'right' },
-  fact: {
-    flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: colors.chip, borderRadius: radius.pill,
-    paddingHorizontal: 10, paddingVertical: 5,
-  },
-  factLight: { backgroundColor: 'rgba(255,255,255,0.14)' },
-  factText: { fontFamily: fonts.medium, fontSize: 13, color: colors.link },
+  fact: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  factText: { fontFamily: fonts.regular, fontSize: 14, color: colors.textMuted },
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginVertical: spacing.xs },
   placeholder: { backgroundColor: colors.placeholder, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
   placeholderText: { color: colors.text, fontFamily: fonts.semibold, fontSize: font.small },
-  progressTrack: { height: 8, borderRadius: 4, backgroundColor: colors.track, overflow: 'hidden' },
-  progressFill: { height: 8, borderRadius: 4 },
+  progressTrack: { height: 4, borderRadius: 2, backgroundColor: colors.track, overflow: 'hidden' },
+  progressFill: { height: 4, borderRadius: 2 },
   statTile: {
-    flexBasis: '47%', flexGrow: 1, backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg, gap: 2,
+    flexBasis: '47%', flexGrow: 1, backgroundColor: colors.surface, borderRadius: 12, padding: spacing.md, gap: 0,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: colors.borderStrong,
   },
-  statIcon: {
-    width: 34, height: 34, borderRadius: 17, backgroundColor: colors.accentSoft, alignItems: 'center',
-    justifyContent: 'center', marginBottom: spacing.sm,
-  },
-  statValue: { fontFamily: fonts.display, fontSize: 26, color: colors.text },
+  statValue: { fontFamily: fonts.semibold, fontSize: 24, color: colors.text },
   statLabel: { fontFamily: fonts.medium, fontSize: 13, color: colors.textMuted },
   statSub: { fontFamily: fonts.regular, fontSize: 12, color: colors.textFaint },
   badge: {
-    flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', borderRadius: radius.pill,
-    paddingHorizontal: 10, paddingVertical: 4,
+    flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', borderRadius: 4,
+    paddingHorizontal: 7, paddingVertical: 2,
   },
-  badgeDot: { width: 6, height: 6, borderRadius: 3 },
   badgeText: { fontFamily: fonts.semibold, fontSize: 12 },
-  banner: { flexDirection: 'row', gap: spacing.md, borderRadius: radius.md, padding: spacing.md, alignItems: 'flex-start' },
+  banner: { flexDirection: 'row', gap: spacing.md, borderRadius: 10, padding: spacing.md, alignItems: 'flex-start' },
   bannerTitle: { fontFamily: fonts.semibold, fontSize: font.small },
   bannerText: { fontFamily: fonts.regular, fontSize: font.small, lineHeight: 20 },
-  empty: { alignItems: 'center', padding: spacing.xl, gap: spacing.md },
-  emptyIcon: {
-    width: 68, height: 68, borderRadius: 34, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center',
-  },
+  empty: { alignItems: 'flex-start', paddingVertical: spacing.xl, gap: spacing.sm },
   field: { gap: 6 },
   fieldLabel: { fontFamily: fonts.medium, fontSize: font.small, color: colors.text },
   inputWrap: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.surface, borderWidth: 1.5,
-    borderColor: colors.border, borderRadius: radius.md, minHeight: 52, paddingHorizontal: spacing.md,
+    flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.surface, borderWidth: 1,
+    borderColor: colors.borderStrong, borderRadius: 8, minHeight: 50, paddingHorizontal: spacing.md,
   },
   inputFocused: { borderColor: colors.link, backgroundColor: colors.surface },
   input: { flex: 1, fontFamily: fonts.regular, fontSize: font.body, color: colors.text, paddingVertical: 12, minHeight: 48 },
@@ -510,27 +501,27 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
   fieldHint: { color: colors.textMuted, fontFamily: fonts.regular, fontSize: font.tiny, lineHeight: 17 },
   checkboxRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md, minHeight: MIN_TOUCH, paddingVertical: spacing.xs },
   checkbox: {
-    width: 26, height: 26, borderRadius: 8, borderWidth: 2, borderColor: colors.borderStrong, alignItems: 'center',
+    width: 24, height: 24, borderRadius: 5, borderWidth: 1.5, borderColor: colors.borderStrong, alignItems: 'center',
     justifyContent: 'center', marginTop: 1, backgroundColor: colors.surface,
   },
   checkboxChecked: { backgroundColor: colors.secondary, borderColor: colors.secondary },
   stepperRow: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.surface, borderRadius: radius.md,
-    padding: spacing.md, paddingLeft: spacing.lg, borderWidth: 1.5, borderColor: colors.border,
+    flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.xs,
   },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   stepBtn: {
-    width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.secondary,
+    width: 44, height: 44, borderRadius: 8, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surface,
   },
-  stepValue: { minWidth: 34, textAlign: 'center', fontFamily: fonts.display, fontSize: 24, color: colors.text },
+  stepValue: { minWidth: 34, textAlign: 'center', fontFamily: fonts.semibold, fontSize: 20, color: colors.text },
   chip: {
-    borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.surface, borderRadius: radius.pill,
-    paddingHorizontal: 14, minHeight: 38, justifyContent: 'center',
+    borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surface, borderRadius: 8,
+    paddingHorizontal: 12, minHeight: 36, justifyContent: 'center',
   },
   chipActive: { backgroundColor: colors.secondary, borderColor: colors.secondary },
   chipText: { fontFamily: fonts.medium, fontSize: 13, color: colors.text },
   link: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', minHeight: 32 },
-  linkText: { fontFamily: fonts.medium, fontSize: font.small, color: colors.link, textDecorationLine: 'underline' },
+  linkText: { fontFamily: fonts.regular, fontSize: font.small, color: colors.link, textDecorationLine: 'underline' },
 });
 
 /** Styles partagés (titres, textes d'aide…) pour les écrans, adaptés au thème actif. */

@@ -12,7 +12,6 @@ function TabIcon({ icons, focused, color }: { icons: IconPair; focused: boolean;
   return (
     <View style={s.iconWrap}>
       <Ionicons name={focused ? icons[0] : icons[1]} size={23} color={color} />
-      {focused ? <View style={s.dot} /> : null}
     </View>
   );
 }
@@ -36,11 +35,11 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="index" options={{
         title: 'Accueil',
-        tabBarIcon: ({ focused, color }) => <TabIcon icons={['moon', 'moon-outline']} focused={focused} color={color} />,
+        tabBarIcon: ({ focused, color }) => <TabIcon icons={['home', 'home-outline']} focused={focused} color={color} />,
       }} />
       <Tabs.Screen name="randonnees" options={{
         title: 'Randonnées',
-        tabBarIcon: ({ focused, color }) => <TabIcon icons={['map', 'map-outline']} focused={focused} color={color} />,
+        tabBarIcon: ({ focused, color }) => <TabIcon icons={['calendar', 'calendar-outline']} focused={focused} color={color} />,
       }} />
       <Tabs.Screen name="mes-reservations" options={{
         title: 'Mes billets',

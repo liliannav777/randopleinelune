@@ -3,27 +3,20 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MoonMark, NightSky } from '@/components/art';
 import { EventCard } from '@/components/EventCard';
-import { Banner, Body, Button, Card, Chips, Icon, LinkText, Screen, SectionTitle, type IconName } from '@/components/ui';
+import { Banner, Body, Button, Card, Chips, Icon, LinkText, Screen, SectionTitle } from '@/components/ui';
 import { listUpcomingEvents } from '@/lib/api';
 import { capitalize, formatDate, formatTime } from '@/lib/format';
 import { useMyReservations } from '@/lib/myReservations';
-import { heroPhoto } from '@/lib/photos';
+import { heroPhoto, photoFor } from '@/lib/photos';
+import { useColors, useLightStatusBar, useStyles, useTheme, type ThemePreference } from '@/lib/theme';
 import { useFocusData } from '@/lib/useAsync';
-import { fonts, radius, spacing, type Colors } from '@/theme';
-import { useColors, useStyles, useTheme, type ThemePreference } from '@/lib/theme';
+import { fonts, spacing, type Colors } from '@/theme';
 
 const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
-  { value: 'system', label: 'Automatique' },
+  { value: 'system', label: 'Comme le téléphone' },
   { value: 'light', label: 'Clair' },
   { value: 'dark', label: 'Sombre' },
-];
-
-const PROMISES: { icon: IconName; title: string; text: string }[] = [
-  { icon: 'moon-outline', title: 'Sous la pleine lune', text: 'Des sorties nocturnes encadrées, au rythme de la nuit.' },
-  { icon: 'people-outline', title: 'En petit groupe', text: '30 marcheurs au maximum pour garder la magie du silence.' },
-  { icon: 'qr-code-outline', title: 'Simple et sans compte', text: 'Réservez en une minute, présentez votre billet, réglez sur place.' },
 ];
 
 function Hero({ onDiscover }: { onDiscover: () => void }) {
@@ -31,28 +24,23 @@ function Hero({ onDiscover }: { onDiscover: () => void }) {
   const insets = useSafeAreaInsets();
   const photo = heroPhoto();
   return (
-    <View style={[s.hero, { paddingTop: insets.top + spacing.xl }]}>
-      {photo ? (
-        <>
-          <Image source={photo.source} style={StyleSheet.absoluteFill} contentFit="cover" accessibilityIgnoresInvertColors />
-          <LinearGradient colors={['rgba(11,22,38,0.78)', 'rgba(11,22,38,0.35)', 'rgba(11,22,38,0.92)']}
-            locations={[0, 0.45, 1]} style={StyleSheet.absoluteFill} pointerEvents="none" />
-        </>
-      ) : <NightSky height={460} seed="accueil" moon={{ x: 300, y: 92, r: 30 }} stars={70} />}
-      <View style={s.heroBrand}>
-        <MoonMark size={30} />
-        <Text style={s.heroEyebrow}>LYON · BEAUJOLAIS</Text>
-      </View>
-      <Text style={s.heroTitle} accessibilityRole="header">Rando{'\n'}Pleine Lune</Text>
-      <Text style={s.heroTagline}>Une autre expérience.</Text>
-      <Text style={s.heroText}>Randonnées nocturnes entre vignes et pierres dorées, à la lumière de la lune.</Text>
-      <Button variant="gold" icon="compass-outline" title="Voir les randonnées" onPress={onDiscover} style={s.heroCta} />
-      {photo ? <Text style={s.heroCredit}>Photo : {photo.caption} — {photo.author}</Text> : null}
+    <View style={[s.hero, { paddingTop: insets.top + spacing.xxl * 2 }]}>
+      {photo ? <Image source={photo.source} style={StyleSheet.absoluteFill} contentFit="cover" accessibilityIgnoresInvertColors /> : null}
+      <LinearGradient colors={['rgba(0,0,0,0.25)', 'rgba(0,0,0,0)', 'rgba(8,14,24,0.55)', 'rgba(8,14,24,0.92)']}
+        locations={[0, 0.25, 0.5, 1]} style={StyleSheet.absoluteFill} pointerEvents="none" />
+      <Text style={s.place}>Lyon · Beaujolais</Text>
+      <Text style={s.title} accessibilityRole="header">Rando Pleine Lune</Text>
+      <Text style={s.text}>
+        Une autre expérience : la randonnée de nuit, à la lumière de la lune, entre vignes et villages de pierres dorées.
+      </Text>
+      <Button variant="gold" title="Voir les prochaines sorties" onPress={onDiscover} style={s.cta} />
+      {photo ? <Text style={s.credit}>{photo.caption} — photo {photo.author}</Text> : null}
     </View>
   );
 }
 
 export default function Home() {
+  useLightStatusBar();
   const { preference, setPreference } = useTheme();
   const colors = useColors();
   const s = useStyles(makeStyles);
@@ -60,23 +48,21 @@ export default function Home() {
   const { data: events, error, refreshing, refresh } = useFocusData(listUpcomingEvents);
   const { reservations } = useMyReservations();
   const next = events?.find((e) => e.status === 'published');
-  const upcomingMine = reservations
+  const nextMine = reservations
     .filter((r) => r.status === 'confirmed' && new Date(r.event.starts_at) > new Date())
-    .sort((a, b) => a.event.starts_at.localeCompare(b.event.starts_at));
-  const nextMine = upcomingMine[0];
+    .sort((a, b) => a.event.starts_at.localeCompare(b.event.starts_at))[0];
+  const galleryPhoto = photoFor('galerie');
 
   return (
-    <Screen hero={<Hero onDiscover={() => router.push('/randonnees')} />} refreshing={refreshing} onRefresh={refresh}
-      contentStyle={{ marginTop: -spacing.xl }}>
+    <Screen hero={<Hero onDiscover={() => router.push('/randonnees')} />} refreshing={refreshing} onRefresh={refresh}>
       {nextMine ? (
-        <Card onPress={() => router.push(`/mes-reservations/${nextMine.id}`)} style={s.myTicket}
-          accessibilityLabel={`Mon prochain billet : ${nextMine.event.title}`}>
-          <View style={s.myTicketIcon}><Icon name="ticket" size={22} color={colors.accentDark} /></View>
-          <View style={{ flex: 1 }}>
-            <Text style={s.myTicketEyebrow}>VOTRE PROCHAINE SORTIE</Text>
-            <Text style={s.myTicketTitle} numberOfLines={1}>{nextMine.event.title}</Text>
-            <Text style={s.myTicketMeta}>
-              {capitalize(formatDate(nextMine.event.starts_at))} · {formatTime(nextMine.event.starts_at)}
+        <Card onPress={() => router.push(`/mes-reservations/${nextMine.id}`)} style={s.mine}
+          accessibilityLabel={`Votre prochaine sortie : ${nextMine.event.title}`}>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={s.mineLabel}>Votre prochaine sortie</Text>
+            <Text style={s.mineTitle} numberOfLines={1}>{nextMine.event.title}</Text>
+            <Text style={s.mineMeta}>
+              {capitalize(formatDate(nextMine.event.starts_at))}, {formatTime(nextMine.event.starts_at)} · voir le billet
             </Text>
           </View>
           <Icon name="chevron-forward" size={20} color={colors.textFaint} />
@@ -87,42 +73,37 @@ export default function Home() {
 
       {next ? (
         <>
-          <SectionTitle action={<LinkText onPress={() => router.push('/randonnees')}>Tout voir</LinkText>}>
+          <SectionTitle action={<LinkText onPress={() => router.push('/randonnees')}>Toutes les dates</LinkText>}>
             Prochaine sortie
           </SectionTitle>
           <EventCard event={next} onPress={() => router.push(`/randonnees/${next.id}`)} />
         </>
       ) : null}
 
-      <SectionTitle>L’esprit des sorties</SectionTitle>
-      <View style={{ gap: spacing.sm }}>
-        {PROMISES.map((p) => (
-          <View key={p.title} style={s.promise}>
-            <View style={s.promiseIcon}><Icon name={p.icon} size={20} color={colors.accentDark} /></View>
-            <View style={{ flex: 1 }}>
-              <Body strong>{p.title}</Body>
-              <Body muted style={{ fontSize: 14, lineHeight: 20 }}>{p.text}</Body>
-            </View>
-          </View>
-        ))}
-      </View>
+      <SectionTitle>Comment ça se passe</SectionTitle>
+      <Body>
+        La réservation est obligatoire : les groupes sont limités à 30 personnes. Vous recevez une confirmation
+        par e-mail et un billet par participant, à montrer au départ.
+      </Body>
+      <Body>Le paiement se fait sur place, le jour de la sortie.</Body>
+      <Body>
+        Pensez à une lampe frontale, de bonnes chaussures et une couche chaude : les nuits sont fraîches sur les
+        hauteurs.
+      </Body>
 
-      <Pressable onPress={() => router.push('/galerie')} accessibilityRole="button" style={s.gallery}>
-        <NightSky height={120} seed="galerie" moon={{ x: 340, y: 34, r: 12 }} stars={30} />
+      <Pressable onPress={() => router.push('/galerie')} accessibilityRole="button" style={({ pressed }) => [s.row, pressed && { opacity: 0.7 }]}>
+        {galleryPhoto ? <Image source={galleryPhoto.source} style={s.rowThumb} contentFit="cover" /> : null}
         <View style={{ flex: 1 }}>
-          <Text style={s.galleryTitle}>Galerie</Text>
-          <Text style={s.galleryText}>Revivez nos dernières nuits de randonnée</Text>
+          <Text style={s.rowTitle}>Photos</Text>
+          <Text style={s.rowText}>Le Beaujolais et nos sorties en images</Text>
         </View>
-        <Icon name="images-outline" size={24} color={colors.accentLight} />
+        <Icon name="chevron-forward" size={20} color={colors.textFaint} />
       </Pressable>
 
-      <View style={s.footerLinks}>
-        <LinkText icon="shield-checkmark-outline" onPress={() => router.push('/confidentialite')}>Conditions et confidentialité</LinkText>
-        <LinkText icon="lock-closed-outline" onPress={() => router.push('/admin')}>Espace organisateur</LinkText>
-      </View>
-
-      <View style={s.appearance}>
-        <Text style={s.appearanceLabel}>Apparence</Text>
+      <View style={s.footer}>
+        <LinkText onPress={() => router.push('/confidentialite')}>Conditions et confidentialité</LinkText>
+        <LinkText onPress={() => router.push('/admin')}>Espace organisateur</LinkText>
+        <Text style={s.footerLabel}>Apparence</Text>
         <Chips options={THEME_OPTIONS} value={preference} onChange={setPreference} />
       </View>
     </Screen>
@@ -131,37 +112,25 @@ export default function Home() {
 
 const makeStyles = (colors: Colors) => StyleSheet.create({
   hero: {
-    paddingHorizontal: spacing.xl, paddingBottom: spacing.xxl + spacing.xl, overflow: 'hidden',
-    borderBottomLeftRadius: radius.xl, borderBottomRightRadius: radius.xl, backgroundColor: colors.primary,
+    paddingHorizontal: spacing.xl, paddingBottom: spacing.xl, overflow: 'hidden', backgroundColor: colors.primary, minHeight: 520,
+    justifyContent: 'flex-end',
   },
-  heroBrand: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  heroCredit: {
-    position: 'absolute', right: spacing.lg, bottom: spacing.xl + 4, fontFamily: fonts.regular, fontSize: 10,
-    color: 'rgba(255,255,255,0.65)', maxWidth: 240, textAlign: 'right',
+  place: { fontFamily: fonts.medium, fontSize: 15, color: 'rgba(255,255,255,0.9)' },
+  title: { fontFamily: fonts.displayBold, fontSize: 40, lineHeight: 44, color: colors.onPrimary, marginTop: 2 },
+  text: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 23, color: 'rgba(255,255,255,0.9)', marginTop: spacing.sm, maxWidth: 340 },
+  cta: { marginTop: spacing.lg, alignSelf: 'flex-start', paddingHorizontal: spacing.xl },
+  credit: { fontFamily: fonts.regular, fontSize: 10, color: 'rgba(255,255,255,0.6)', marginTop: spacing.md },
+  mine: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderLeftWidth: 3, borderLeftColor: colors.accent },
+  mineLabel: { fontFamily: fonts.medium, fontSize: 13, color: colors.accentDark },
+  mineTitle: { fontFamily: fonts.semibold, fontSize: 16, color: colors.text },
+  mineMeta: { fontFamily: fonts.regular, fontSize: 13, color: colors.textMuted },
+  row: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md, marginTop: spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.border,
   },
-  heroEyebrow: { fontFamily: fonts.semibold, fontSize: 12, letterSpacing: 2.4, color: colors.accentLight },
-  heroTitle: { fontFamily: fonts.displayBold, fontSize: 44, lineHeight: 48, color: colors.onPrimary, marginTop: spacing.sm },
-  heroTagline: { fontFamily: fonts.displayItalic, fontSize: 20, color: colors.accentLight, marginTop: spacing.md },
-  heroText: { fontFamily: fonts.regular, fontSize: 15, lineHeight: 22, color: colors.onPrimaryMuted, marginTop: spacing.sm, maxWidth: 300 },
-  heroCta: { marginTop: spacing.xl, alignSelf: 'flex-start', paddingHorizontal: spacing.xl },
-  myTicket: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderLeftWidth: 4, borderLeftColor: colors.accent },
-  myTicketIcon: {
-    width: 44, height: 44, borderRadius: 22, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center',
-  },
-  myTicketEyebrow: { fontFamily: fonts.semibold, fontSize: 10, letterSpacing: 1.4, color: colors.accentDark },
-  myTicketTitle: { fontFamily: fonts.display, fontSize: 17, color: colors.text },
-  myTicketMeta: { fontFamily: fonts.regular, fontSize: 13, color: colors.textMuted },
-  promise: { flexDirection: 'row', gap: spacing.md, alignItems: 'flex-start', paddingVertical: spacing.xs },
-  promiseIcon: {
-    width: 40, height: 40, borderRadius: 20, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center',
-  },
-  gallery: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderRadius: radius.lg, overflow: 'hidden',
-    padding: spacing.lg, minHeight: 96, marginTop: spacing.sm, backgroundColor: colors.primary,
-  },
-  galleryTitle: { fontFamily: fonts.display, fontSize: 20, color: colors.onPrimary },
-  galleryText: { fontFamily: fonts.regular, fontSize: 13, color: colors.onPrimaryMuted },
-  footerLinks: { gap: spacing.xs, marginTop: spacing.lg, alignItems: 'center' },
-  appearance: { alignItems: 'center', gap: spacing.sm, marginTop: spacing.md },
-  appearanceLabel: { fontFamily: fonts.semibold, fontSize: 11, letterSpacing: 1.4, color: colors.textFaint, textTransform: 'uppercase' },
+  rowThumb: { width: 56, height: 56, borderRadius: 6 },
+  rowTitle: { fontFamily: fonts.semibold, fontSize: 16, color: colors.text },
+  rowText: { fontFamily: fonts.regular, fontSize: 14, color: colors.textMuted },
+  footer: { gap: spacing.sm, marginTop: spacing.lg },
+  footerLabel: { fontFamily: fonts.regular, fontSize: 13, color: colors.textMuted, marginTop: spacing.md },
 });

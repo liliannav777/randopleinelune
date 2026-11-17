@@ -1,61 +1,19 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, Linking, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MoonMark, NightSky } from '@/components/art';
 import { QrCard } from '@/components/QrCard';
 import {
-  Badge,
-  Banner,
-  Body,
-  Button,
-  Card,
-  Empty,
-  Header,
-  Icon,
-  IconButton,
-  InfoRow,
-  Loading,
-  Screen,
-  SectionTitle,
-  useUiStyles,
+  Badge, Banner, Body, Button, Card, Divider, Empty, Header, InfoRow, LinkText, Loading, Screen, SectionTitle, useUiStyles,
 } from '@/components/ui';
 import { cancelReservation } from '@/lib/api';
 import { toAppError } from '@/lib/errors';
 import { capitalize, formatDate, formatDateTime, formatPrice, formatTime, paymentLabel } from '@/lib/format';
 import { useMyReservations } from '@/lib/myReservations';
 import { enablePushFor, getPushPermission, type PushPermission } from '@/lib/notifications';
-import type { Reservation } from '@/lib/types';
-import { fonts, radius, spacing, type Colors } from '@/theme';
-import { useColors, useStyles } from '@/lib/theme';
-
-function Hero({ r, isNew, onBack }: { r: Reservation; isNew: boolean; onBack: () => void }) {
-  const colors = useColors();
-  const s = useStyles(makeStyles);
-  const insets = useSafeAreaInsets();
-  const confirmed = r.status === 'confirmed';
-  return (
-    <View style={[s.hero, { paddingTop: insets.top + spacing.sm }]}>
-      <NightSky height={330} seed={r.event.id} moon={{ x: 335, y: 70, r: 18 }} stars={50} />
-      <View style={{ alignSelf: 'flex-start' }}><IconButton icon="chevron-back" onPress={onBack} label="Retour" /></View>
-      <View style={s.heroCenter}>
-        {confirmed ? (
-          <View style={s.check}><Icon name="checkmark" size={26} color={colors.primary} /></View>
-        ) : (
-          <View style={[s.check, { backgroundColor: colors.dangerBg }]}><Icon name="close" size={26} color={colors.danger} /></View>
-        )}
-        <Text style={s.heroEyebrow}>
-          {confirmed ? (isNew ? 'RÉSERVATION CONFIRMÉE' : 'VOTRE RÉSERVATION') : 'RÉSERVATION ANNULÉE'}
-        </Text>
-        <Text style={s.heroTitle} accessibilityRole="header">{r.event.title}</Text>
-        <Text style={s.heroMeta}>{capitalize(formatDate(r.event.starts_at))} · {formatTime(r.event.starts_at)}</Text>
-      </View>
-    </View>
-  );
-}
+import { fonts, spacing, type Colors } from '@/theme';
+import { useStyles } from '@/lib/theme';
 
 export default function ReservationDetail() {
-  const colors = useColors();
   const s = useStyles(makeStyles);
   const styles = useUiStyles();
   const { id, nouvelle } = useLocalSearchParams<{ id: string; nouvelle?: string }>();
@@ -112,39 +70,46 @@ export default function ReservationDetail() {
     );
   }
 
+  const title = !confirmed ? 'Réservation annulée' : nouvelle ? 'C’est réservé !' : 'Votre réservation';
+
   return (
-    <Screen hero={<Hero r={r} isNew={!!nouvelle} onBack={goBack} />} contentStyle={{ marginTop: -spacing.xxl }}>
-      <Card>
-        {nouvelle && confirmed ? (
-          <Banner tone="success" message="Un e-mail récapitulatif avec vos billets vous a été envoyé." />
-        ) : null}
-        {!confirmed ? (
-          <Banner message={r.cancelled_by === 'event_cancelled'
-            ? 'Cette sortie a été annulée par l’organisateur. Aucun paiement n’est dû.'
-            : `Réservation annulée${r.cancelled_at ? ` le ${formatDate(r.cancelled_at)}` : ''}.`} />
-        ) : null}
-        <InfoRow icon="location-outline" label="Rendez-vous" value={r.event.meeting_point} />
-        <InfoRow icon="time-outline" label="Heure" value={formatTime(r.event.starts_at)} />
-        <InfoRow icon="people-outline" label="Participants" value={String(r.participant_count)} />
-        <InfoRow icon="wallet-outline" label="À régler sur place" value={formatPrice(r.total_amount_cents)} />
+    <Screen header={<Header title={title} onBack={goBack} />}>
+      {nouvelle && confirmed ? (
+        <Banner tone="success" message="Vous allez recevoir un e-mail avec le récapitulatif et vos billets." />
+      ) : null}
+      {!confirmed ? (
+        <Banner message={r.cancelled_by === 'event_cancelled'
+          ? 'Cette sortie a été annulée par l’organisateur. Vous n’avez rien à régler.'
+          : `Vous avez annulé cette réservation${r.cancelled_at ? ` le ${formatDate(r.cancelled_at)}` : ''}.`} />
+      ) : null}
+
+      <Text style={s.event}>{r.event.title}</Text>
+      <Text style={s.when}>{capitalize(formatDate(r.event.starts_at))}, rendez-vous à {formatTime(r.event.starts_at)}</Text>
+
+      <View style={{ marginTop: spacing.sm }}>
+        <InfoRow label="Lieu" value={r.event.meeting_point} />
+        <Divider />
+        <InfoRow label="Participants" value={String(r.participant_count)} />
+        <Divider />
+        <InfoRow label="À régler sur place" value={formatPrice(r.total_amount_cents)} />
         {confirmed ? (
-          <View style={styles.infoRow}>
-            <View style={styles.infoLabelWrap}>
-              <Icon name="card-outline" size={16} color={colors.textFaint} />
+          <>
+            <Divider />
+            <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Paiement</Text>
+              <Badge label={paymentLabel[r.payment.status]} tone={r.payment.status === 'paid' ? 'success' : 'neutral'} />
             </View>
-            <Badge label={paymentLabel[r.payment.status]} tone={r.payment.status === 'paid' ? 'success' : 'accent'} />
-          </View>
+          </>
         ) : null}
-        {r.event.meeting_point_url && confirmed ? (
-          <Button variant="secondary" small icon="navigate-outline" title="Itinéraire vers le rendez-vous"
-            onPress={() => Linking.openURL(r.event.meeting_point_url!)} style={{ marginTop: spacing.sm }} />
-        ) : null}
-      </Card>
+      </View>
+      {r.event.meeting_point_url && confirmed ? (
+        <LinkText onPress={() => Linking.openURL(r.event.meeting_point_url!)}>Ouvrir l’itinéraire dans Plans</LinkText>
+      ) : null}
 
       {confirmed ? (
         <>
           <SectionTitle>{r.attendees.length > 1 ? 'Vos billets' : 'Votre billet'}</SectionTitle>
+          <Body muted style={{ fontSize: 14 }}>Montrez-le à l’organisateur au départ. Une capture d’écran fonctionne aussi.</Body>
           {r.attendees.map((a) => (
             <QrCard key={a.id} attendee={a} total={r.attendees.length} eventTitle={r.event.title} startsAt={r.event.starts_at} />
           ))}
@@ -152,54 +117,39 @@ export default function ReservationDetail() {
       ) : null}
 
       {confirmed && isUpcoming && push !== 'granted' && push !== 'unavailable' && push !== 'loading' ? (
-        <View style={s.pushCard}>
-          <NightSky height={180} seed="rappels" moon={{ x: 350, y: 40, r: 14 }} hills={false} stars={30} />
-          <MoonMark size={36} />
-          <Text style={s.pushTitle}>Ne manquez pas le lever de lune</Text>
-          <Text style={s.pushText}>
-            Un rappel la veille et quelques heures avant le départ, et une alerte si la sortie change.
-            La confirmation par e-mail reste votre justificatif.
-          </Text>
+        <Card style={{ marginTop: spacing.md }}>
+          <Text style={s.pushTitle}>Recevoir un rappel ?</Text>
+          <Body muted style={{ fontSize: 14, lineHeight: 20 }}>
+            Une notification la veille et quelques heures avant le départ, et un message si la sortie change.
+            L’e-mail de confirmation reste votre justificatif.
+          </Body>
           {push === 'denied'
-            ? <Button variant="gold" small icon="settings-outline" title="Ouvrir les réglages" onPress={() => Linking.openSettings()} />
-            : <Button variant="gold" small icon="notifications-outline" title="Activer les rappels" onPress={activatePush} />}
-        </View>
+            ? <Button variant="secondary" small title="Ouvrir les réglages" onPress={() => Linking.openSettings()} />
+            : <Button variant="secondary" small title="Activer les rappels" onPress={activatePush} />}
+        </Card>
       ) : null}
-      {push === 'granted' && confirmed && isUpcoming ? <Badge label="Rappels activés" tone="success" icon="notifications" /> : null}
+      {push === 'granted' && confirmed && isUpcoming ? <Body muted style={{ fontSize: 14 }}>Les rappels sont activés.</Body> : null}
 
-      {r.event.equipment && confirmed ? (<><SectionTitle>Équipement conseillé</SectionTitle><Body>{r.event.equipment}</Body></>) : null}
-      {r.event.instructions && confirmed ? (<><SectionTitle>Consignes</SectionTitle><Body>{r.event.instructions}</Body></>) : null}
+      {r.event.equipment && confirmed ? (<><SectionTitle>À emporter</SectionTitle><Body>{r.event.equipment}</Body></>) : null}
+      {r.event.instructions && confirmed ? (<><SectionTitle>Bon à savoir</SectionTitle><Body>{r.event.instructions}</Body></>) : null}
 
       {error ? <Banner message={error} /> : null}
       {r.can_cancel ? (
-        <View style={{ gap: spacing.xs, marginTop: spacing.md }}>
-          <Button variant="danger" icon="close-circle-outline" title="Annuler ma réservation" onPress={confirmCancel} loading={cancelling} />
+        <View style={{ gap: spacing.xs, marginTop: spacing.lg }}>
+          <Button variant="ghost" title="Annuler ma réservation" onPress={confirmCancel} loading={cancelling} />
           <Text style={[styles.fieldHint, { textAlign: 'center' }]}>
-            Annulation possible jusqu’au {formatDateTime(r.cancellation_deadline)}.
+            Possible jusqu’au {formatDateTime(r.cancellation_deadline)}.
           </Text>
         </View>
       ) : confirmed && isUpcoming ? (
-        <Body muted style={{ fontSize: 13 }}>Le délai d’annulation en ligne est dépassé : contactez l’organisateur en cas d’empêchement.</Body>
+        <Body muted style={{ fontSize: 14 }}>Le délai pour annuler en ligne est passé : en cas d’empêchement, prévenez l’organisateur.</Body>
       ) : null}
     </Screen>
   );
 }
 
 const makeStyles = (colors: Colors) => StyleSheet.create({
-  hero: {
-    paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl + spacing.xl, overflow: 'hidden', backgroundColor: colors.primary,
-  },
-  heroCenter: { alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm },
-  check: {
-    width: 52, height: 52, borderRadius: 26, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center',
-  },
-  heroEyebrow: { fontFamily: fonts.semibold, fontSize: 11, letterSpacing: 1.8, color: colors.accentLight, marginTop: spacing.xs },
-  heroTitle: { fontFamily: fonts.displayBold, fontSize: 26, lineHeight: 32, color: colors.onPrimary, textAlign: 'center' },
-  heroMeta: { fontFamily: fonts.medium, fontSize: 14, color: colors.onPrimaryMuted },
-  pushCard: {
-    borderRadius: radius.lg, overflow: 'hidden', padding: spacing.lg, gap: spacing.sm, backgroundColor: colors.primary,
-    alignItems: 'flex-start',
-  },
-  pushTitle: { fontFamily: fonts.display, fontSize: 19, color: colors.onPrimary },
-  pushText: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 20, color: colors.onPrimaryMuted, marginBottom: spacing.xs },
+  event: { fontFamily: fonts.display, fontSize: 22, lineHeight: 28, color: colors.text, marginTop: spacing.xs },
+  when: { fontFamily: fonts.regular, fontSize: 15, color: colors.textMuted },
+  pushTitle: { fontFamily: fonts.semibold, fontSize: 16, color: colors.text },
 });

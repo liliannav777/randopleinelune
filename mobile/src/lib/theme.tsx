@@ -1,6 +1,8 @@
 // Thème clair / sombre : suit le réglage du téléphone, ou un choix forcé
 // (mémorisé sur l'appareil).
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from 'expo-router';
+import { setStatusBarStyle } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useColorScheme } from 'react-native';
@@ -72,4 +74,18 @@ export function useStyles<T>(factory: (c: Colors) => T): T {
 export function useShadow() {
   const colors = useColors();
   return useCallback((level: 1 | 2 | 3 = 1) => baseShadow(level, colors.shadow), [colors.shadow]);
+}
+
+/**
+ * Barre d'état claire tant que l'écran est affiché (écrans qui s'ouvrent sur une photo sombre).
+ * Les autres écrans suivent le thème (texte foncé en mode clair).
+ */
+export function useLightStatusBar() {
+  const { scheme } = useTheme();
+  useFocusEffect(
+    useCallback(() => {
+      setStatusBarStyle('light', true);
+      return () => setStatusBarStyle(scheme === 'dark' ? 'light' : 'dark', true);
+    }, [scheme]),
+  );
 }

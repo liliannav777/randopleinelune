@@ -1,9 +1,9 @@
 import { useRouter } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
-import { DateBadge, EventCover } from '@/components/EventCard';
+import { EventCover } from '@/components/EventCard';
 import { Badge, Banner, Button, Card, Empty, Header, Icon, Loading, Screen, SectionTitle } from '@/components/ui';
 import { toAppError } from '@/lib/errors';
-import { formatTime } from '@/lib/format';
+import { capitalize, formatDate, formatTime } from '@/lib/format';
 import { useMyReservations } from '@/lib/myReservations';
 import type { Reservation } from '@/lib/types';
 import { fonts, spacing, type Colors } from '@/theme';
@@ -16,20 +16,19 @@ function ReservationRow({ r, onPress, past }: { r: Reservation; onPress: () => v
     <Card onPress={onPress} style={[s.row, past && { opacity: 0.75 }]}
       accessibilityLabel={`${r.event.title}, ${r.participant_count} participant(s)`}>
       <View style={s.thumb}>
-        <EventCover uri={r.event.cover_image} height={84} seed={r.event.id} hint={`${r.event.title} ${r.event.meeting_point}`} />
-        <View style={s.thumbDate}><DateBadge iso={r.event.starts_at} /></View>
+        <EventCover uri={r.event.cover_image} height={64} seed={r.event.id} hint={`${r.event.title} ${r.event.meeting_point}`} />
       </View>
-      <View style={{ flex: 1, gap: 4 }}>
+      <View style={{ flex: 1, gap: 2 }}>
         <Text style={s.title} numberOfLines={2}>{r.event.title}</Text>
-        <View style={s.meta}>
-          <Icon name="time-outline" size={14} color={colors.textMuted} />
-          <Text style={s.metaText}>{formatTime(r.event.starts_at)}</Text>
-          <Icon name="people-outline" size={14} color={colors.textMuted} />
-          <Text style={s.metaText}>{r.participant_count}</Text>
-        </View>
-        {r.status === 'confirmed'
-          ? <Badge label={past ? 'Passée' : 'Confirmée'} tone={past ? 'neutral' : 'success'} />
-          : <Badge label={r.cancelled_by === 'event_cancelled' ? 'Sortie annulée' : 'Annulée'} tone="danger" />}
+        <Text style={s.metaText}>
+          {capitalize(formatDate(r.event.starts_at))}, {formatTime(r.event.starts_at)}
+        </Text>
+        <Text style={s.metaText}>
+          {r.participant_count} personne{r.participant_count > 1 ? 's' : ''}
+        </Text>
+        {r.status !== 'confirmed'
+          ? <Badge label={r.cancelled_by === 'event_cancelled' ? 'Sortie annulée' : 'Annulée'} tone="danger" />
+          : null}
       </View>
       <Icon name="chevron-forward" size={20} color={colors.textFaint} />
     </Card>
@@ -44,16 +43,15 @@ export default function MyReservations() {
   const past = reservations.filter((r) => new Date(r.event.starts_at) < now).reverse();
 
   return (
-    <Screen header={<Header title="Mes billets" subtitle="Sur cet appareil" seed="billets" />}
+    <Screen header={<Header title="Mes billets" subtitle="Les réservations faites depuis ce téléphone" />}
       refreshing={loading && reservations.length > 0} onRefresh={refresh}>
       {error ? <Banner message={toAppError(error).message} /> : null}
       {loading && reservations.length === 0 ? <Loading /> : null}
       {!loading && reservations.length === 0 ? (
         <Empty
-          icon="ticket-outline"
           title="Aucun billet pour l’instant"
           message="Vos réservations apparaîtront ici. Sur un autre appareil, ouvrez le lien « Ouvrir ma réservation » reçu par e-mail."
-          action={<Button variant="gold" icon="compass-outline" title="Découvrir les randonnées" onPress={() => router.push('/randonnees')} />}
+          action={<Button variant="gold" title="Découvrir les randonnées" onPress={() => router.push('/randonnees')} />}
         />
       ) : null}
       {upcoming.length > 0 ? <SectionTitle>À venir</SectionTitle> : null}
@@ -66,9 +64,7 @@ export default function MyReservations() {
 
 const makeStyles = (colors: Colors) => StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md },
-  thumb: { width: 84 },
-  thumbDate: { position: 'absolute', top: 6, left: 6, transform: [{ scale: 0.78 }], transformOrigin: 'top left' },
-  title: { fontFamily: fonts.display, fontSize: 17, lineHeight: 22, color: colors.text },
-  meta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  metaText: { fontFamily: fonts.regular, fontSize: 13, color: colors.textMuted, marginRight: 8 },
+  thumb: { width: 64 },
+  title: { fontFamily: fonts.semibold, fontSize: 16, lineHeight: 21, color: colors.text },
+  metaText: { fontFamily: fonts.regular, fontSize: 14, color: colors.textMuted },
 });

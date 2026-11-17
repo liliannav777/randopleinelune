@@ -90,7 +90,7 @@ export default function Scanner() {
     if (r) setInfo({ ...r, result: info.result === 'checked_in' ? 'checked_in' : r.result });
   }
 
-  const header = <Header seed="pointage" title="Pointage" subtitle={event ? `${event.title} • ${formatTime(event.starts_at)}` : 'Scanner une réservation'}
+  const header = <Header title="Pointage" subtitle={event ? `${event.title} • ${formatTime(event.starts_at)}` : 'Scanner une réservation'}
     onBack={() => router.back()} />;
 
   let camera;
@@ -156,19 +156,19 @@ export default function Scanner() {
             </>
           ) : null}
 
-          {info.result === 'valid' ? <Button variant="gold" icon="checkmark-circle-outline" title="Confirmer la présence" loading={busy} onPress={confirmPresence} /> : null}
+          {info.result === 'valid' ? <Button variant="gold" title="Confirmer la présence" loading={busy} onPress={confirmPresence} /> : null}
           {info.reservation && info.payment && info.payment.status !== 'paid'
             && (info.result === 'checked_in' || info.result === 'already_present' || info.result === 'valid') ? (
               showPayment
                 ? <PaymentEditor reservationId={info.reservation.id} amountDue={info.payment.amount_due_cents}
                     amountPaid={info.payment.amount_paid_cents} onSaved={() => { setShowPayment(false); refreshInfo(); }} />
-                : <Button variant="secondary" icon="wallet-outline" title="Marquer comme payé" onPress={() => setShowPayment(true)} />
+                : <Button variant="secondary" title="Marquer comme payé" onPress={() => setShowPayment(true)} />
             ) : null}
-          <Button icon="scan-outline" title="Scanner le suivant" onPress={next} />
+          <Button title="Scanner le suivant" onPress={next} />
         </Card>
       ) : null}
 
-      <Button variant="ghost" icon="list-outline" title="Saisie manuelle (liste des participants)" onPress={() => router.push(`/admin/participants/${eventId}`)} />
+      <Button variant="ghost" title="Saisie manuelle (liste des participants)" onPress={() => router.push(`/admin/participants/${eventId}`)} />
     </Screen>
   );
 }

@@ -149,11 +149,10 @@ export function buildEmail(
 <html lang="fr"><body style="margin:0;background:#F3F5F8;font-family:Helvetica,Arial,sans-serif;color:#202936">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F3F5F8;padding:24px 0">
 <tr><td align="center">
-<table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden">
-  <tr><td style="background:#14243A;padding:28px 24px;text-align:center">
-    <div style="width:28px;height:28px;border-radius:14px;background:#D8B66A;margin:0 auto 12px"></div>
-    <div style="color:#ffffff;font-size:18px;font-weight:bold;letter-spacing:1px">RANDO PLEINE LUNE</div>
-    <div style="color:#cfd6e0;font-size:12px;letter-spacing:1px">LYON BEAUJOLAIS</div>
+<table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #D5DCE4">
+  <tr><td style="background:#14243A;padding:20px 24px">
+    <div style="color:#ffffff;font-size:18px;font-weight:bold;font-family:Georgia,serif">Rando Pleine Lune</div>
+    <div style="color:#cfd6e0;font-size:13px">Lyon · Beaujolais</div>
   </td></tr>
   <tr><td style="padding:24px">
     <p style="margin:0 0 12px">Bonjour ${escapeHtml(r.contact.first_name)},</p>

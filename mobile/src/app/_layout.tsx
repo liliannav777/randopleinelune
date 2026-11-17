@@ -14,7 +14,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AdminAuthProvider } from '@/lib/adminAuth';
 import { MyReservationsProvider } from '@/lib/myReservations';
 import '@/lib/notifications';
-import { ThemeProvider, useColors } from '@/lib/theme';
+import { ThemeProvider, useColors, useTheme } from '@/lib/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -46,10 +46,10 @@ export default function RootLayout() {
 
 function ThemedStack() {
   const colors = useColors();
+  const { scheme } = useTheme();
   return (
     <>
-      {/* Les en-têtes restent bleu nuit dans les deux thèmes : texte de barre d'état clair. */}
-      <StatusBar style="light" />
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <Stack
         screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background }, animation: 'slide_from_right' }}
       >

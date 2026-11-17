@@ -50,7 +50,7 @@ export default function Reserve() {
   const [submitting, setSubmitting] = useState(false);
   const [showNames, setShowNames] = useState(false);
 
-  const header = <Header title="Réserver" subtitle="Votre inscription" onBack={() => router.back()} seed="reserver" />;
+  const header = <Header title="Réserver" onBack={() => router.back()} />;
   const [event, settings] = data ?? [null, null];
   if (loading && !data) return <Screen header={header}><Loading /></Screen>;
   if (!event || !settings) {
@@ -106,7 +106,7 @@ export default function Reserve() {
               <Text style={styles.infoLabel}>Total à régler sur place</Text>
               <Text style={{ fontFamily: fonts.display, fontSize: 22, color: colors.text }}>{formatPrice(total)}</Text>
             </View>
-            <Button variant="gold" icon="checkmark-circle-outline" title="Confirmer la réservation" onPress={submit}
+            <Button variant="gold" title="Confirmer la réservation" onPress={submit}
               loading={submitting} disabled={seatsLeft === 0} />
             <Text style={[styles.fieldHint, { textAlign: 'center' }]}>Confirmation immédiate si places disponibles</Text>
           </>

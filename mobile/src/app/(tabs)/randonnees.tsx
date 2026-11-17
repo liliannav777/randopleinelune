@@ -10,7 +10,7 @@ export default function HikeList() {
   const count = data?.filter((e) => e.status === 'published').length ?? 0;
 
   return (
-    <Screen header={<Header title="Randonnées" subtitle="Sorties à venir" seed="liste" />}
+    <Screen header={<Header title="Prochaines sorties" />}
       refreshing={refreshing} onRefresh={refresh}>
       {error ? <Banner message={error.message} /> : null}
       {loading && !data ? <Loading /> : null}
@@ -19,7 +19,7 @@ export default function HikeList() {
       ) : null}
       {data?.length === 0 ? (
         <Empty title="Aucune sortie programmée" message="Les prochaines randonnées seront annoncées ici très bientôt."
-          action={<Button variant="secondary" icon="images-outline" title="Voir la galerie" onPress={() => router.push('/galerie')} />} />
+          action={<Button variant="secondary" title="Voir la galerie" onPress={() => router.push('/galerie')} />} />
       ) : null}
       {data?.map((e) => <EventCard key={e.id} event={e} onPress={() => router.push(`/randonnees/${e.id}`)} />)}
     </Screen>

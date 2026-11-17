@@ -1,5 +1,4 @@
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import {
@@ -9,17 +8,37 @@ import { photoFor } from '@/lib/photos';
 import type { HikeEvent } from '@/lib/types';
 import { fonts, radius, spacing, type Colors } from '@/theme';
 import { NightSky } from './art';
-import { Badge, Card, Fact, Icon, ProgressBar, type IconName } from './ui';
+import { Badge, Card, ProgressBar, type IconName } from './ui';
 import { useColors, useStyles } from '@/lib/theme';
 
-export function eventStatusBadge(e: HikeEvent) {
+/** Étiquette d'état, seulement quand elle apporte une information (sinon null). */
+export function eventStatusBadge(e: HikeEvent, always = false) {
   if (e.status === 'cancelled') return <Badge label="Annulée" tone="danger" />;
   if (e.status === 'closed') return <Badge label="Inscriptions closes" tone="neutral" />;
   if (e.status === 'completed') return <Badge label="Terminée" tone="neutral" />;
   if (e.status === 'draft') return <Badge label="Brouillon" tone="warning" />;
   if (e.seats_taken >= e.capacity) return <Badge label="Complet" tone="warning" />;
   if (e.capacity - e.seats_taken <= 5) return <Badge label="Dernières places" tone="accent" />;
-  return <Badge label="Inscriptions ouvertes" tone="success" />;
+  return always ? <Badge label="Inscriptions ouvertes" tone="success" /> : null;
+}
+
+const LEVEL: Record<NonNullable<HikeEvent['difficulty']>, string> = {
+  facile: 'facile', moyenne: 'moyen', soutenue: 'soutenu', difficile: 'difficile',
+};
+
+/** « 11,5 km · 320 m de dénivelé · niveau moyen » */
+export function factsLine(e: Pick<HikeEvent, 'distance_km' | 'elevation_m' | 'difficulty'>): string {
+  return [
+    e.distance_km != null ? formatDistance(e.distance_km) : null,
+    e.elevation_m != null ? `${e.elevation_m} m de dénivelé` : null,
+    e.difficulty ? `niveau ${LEVEL[e.difficulty]}` : null,
+  ].filter(Boolean).join(' · ');
+}
+
+export function seatsLabel(e: Pick<HikeEvent, 'capacity' | 'seats_taken'>): string {
+  const left = Math.max(0, e.capacity - e.seats_taken);
+  if (left === 0) return 'Complet';
+  return `${left} place${left > 1 ? 's' : ''} sur ${e.capacity}`;
 }
 
 /**
@@ -38,11 +57,7 @@ export function EventCover({ uri, height = 160, seed = 'rpl', hint, rounded = tr
       {uri ? (
         <Image source={{ uri }} style={StyleSheet.absoluteFill} contentFit="cover" accessibilityIgnoresInvertColors transition={200} />
       ) : fallback ? (
-        <>
-          <Image source={fallback.source} style={StyleSheet.absoluteFill} contentFit="cover" accessibilityIgnoresInvertColors />
-          <LinearGradient colors={['rgba(11,22,38,0.30)', 'rgba(20,36,58,0.10)', 'rgba(11,22,38,0.45)']}
-            style={StyleSheet.absoluteFill} pointerEvents="none" />
-        </>
+        <Image source={fallback.source} style={StyleSheet.absoluteFill} contentFit="cover" accessibilityIgnoresInvertColors />
       ) : (
         <NightSky height={Math.max(120, Math.round(height * 0.9))} seed={seed} stars={28} />
       )}
@@ -51,7 +66,7 @@ export function EventCover({ uri, height = 160, seed = 'rpl', hint, rounded = tr
   );
 }
 
-const MONTHS = ['JANV.', 'FÉVR.', 'MARS', 'AVR.', 'MAI', 'JUIN', 'JUIL.', 'AOÛT', 'SEPT.', 'OCT.', 'NOV.', 'DÉC.'];
+const MONTHS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
 
 export function DateBadge({ iso }: { iso: string }) {
   const s = useStyles(makeStyles);
@@ -77,19 +92,15 @@ export function eventFacts(e: Pick<HikeEvent, 'distance_km' | 'elevation_m' | 'd
 }
 
 export function SeatsMeter({ event }: { event: HikeEvent }) {
-  const colors = useColors();
   const s = useStyles(makeStyles);
   const left = Math.max(0, event.capacity - event.seats_taken);
   return (
     <View style={{ gap: 6 }}>
       <View style={s.seatsRow}>
-        <View style={s.seatsLabel}>
-          <Icon name="people-outline" size={15} color={colors.textMuted} />
-          <Text style={s.seatsText}>
-            {left === 0 ? 'Complet' : `${left} place${left > 1 ? 's' : ''} disponible${left > 1 ? 's' : ''}`}
-          </Text>
-        </View>
-        <Text style={s.seatsCap}>{event.seats_taken} / {event.capacity}</Text>
+        <Text style={s.seatsText}>
+          {left === 0 ? 'Complet' : `Encore ${left} place${left > 1 ? 's' : ''}`}
+        </Text>
+        <Text style={s.seatsCap}>{event.seats_taken} inscrits sur {event.capacity}</Text>
       </View>
       <ProgressBar value={event.seats_taken} max={event.capacity} />
     </View>
@@ -99,53 +110,46 @@ export function SeatsMeter({ event }: { event: HikeEvent }) {
 export function EventCard({ event, onPress }: { event: HikeEvent; onPress: () => void }) {
   const colors = useColors();
   const s = useStyles(makeStyles);
+  const left = event.capacity - event.seats_taken;
+  const facts = factsLine(event);
   return (
     <Card onPress={onPress} style={{ padding: 0, overflow: 'hidden', gap: 0 }}
       accessibilityLabel={`${event.title}, ${formatDate(event.starts_at)}`}>
-      <EventCover uri={event.cover_image} height={150} seed={event.id} hint={`${event.title} ${event.meeting_point}`} rounded={false}>
-        <View style={s.coverTop}>
-          <DateBadge iso={event.starts_at} />
-          <View style={s.price}><Text style={s.priceText}>{formatTariff(event.price_cents)}</Text></View>
-        </View>
+      <EventCover uri={event.cover_image} height={160} seed={event.id} hint={`${event.title} ${event.meeting_point}`} rounded={false}>
+        <View style={s.coverTop}><DateBadge iso={event.starts_at} /></View>
       </EventCover>
       <View style={s.body}>
         {eventStatusBadge(event)}
         <Text style={s.title} numberOfLines={2}>{event.title}</Text>
-        <View style={s.place}>
-          <Icon name="location-outline" size={15} color={colors.textMuted} />
-          <Text style={s.placeText} numberOfLines={1}>
-            {capitalize(formatDate(event.starts_at))} · {event.meeting_point}
-          </Text>
+        <Text style={s.meta} numberOfLines={1}>
+          {capitalize(formatDate(event.starts_at))}, {formatTime(event.starts_at)} — {event.meeting_point}
+        </Text>
+        {facts ? <Text style={s.meta}>{facts}</Text> : null}
+        <View style={s.bottom}>
+          <Text style={s.price}>{formatTariff(event.price_cents)}</Text>
+          {event.status === 'published' ? (
+            <Text style={[s.seats, left <= 5 && { color: colors.warning }]}>{seatsLabel(event)}</Text>
+          ) : null}
         </View>
-        <View style={s.facts}>
-          {eventFacts(event).map((f) => <Fact key={f.icon} icon={f.icon} label={f.label} />)}
-        </View>
-        {event.status === 'published' ? <SeatsMeter event={event} /> : null}
       </View>
     </Card>
   );
 }
 
 const makeStyles = (colors: Colors) => StyleSheet.create({
-  coverTop: {
-    position: 'absolute', top: spacing.md, left: spacing.md, right: spacing.md, flexDirection: 'row',
-    justifyContent: 'space-between', alignItems: 'flex-start',
-  },
+  coverTop: { position: 'absolute', top: spacing.md, left: spacing.md },
   dateBadge: {
-    backgroundColor: colors.white, borderRadius: radius.md, paddingHorizontal: 10, paddingVertical: 6,
-    alignItems: 'center', minWidth: 54,
+    backgroundColor: colors.white, borderRadius: 6, paddingHorizontal: 9, paddingVertical: 4, alignItems: 'center', minWidth: 46,
   },
-  dateDay: { fontFamily: fonts.display, fontSize: 22, lineHeight: 26, color: colors.primary },
-  dateMonth: { fontFamily: fonts.bold, fontSize: 10, letterSpacing: 1, color: colors.accentDark },
-  price: { backgroundColor: 'rgba(11,22,38,0.72)', borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6 },
-  priceText: { fontFamily: fonts.semibold, fontSize: 13, color: colors.accentLight },
-  body: { padding: spacing.lg, gap: spacing.sm },
-  title: { fontFamily: fonts.display, fontSize: 21, lineHeight: 27, color: colors.text },
-  place: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  placeText: { fontFamily: fonts.regular, fontSize: 14, color: colors.textMuted, flex: 1 },
-  facts: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 2 },
-  seatsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.xs },
-  seatsLabel: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  seatsText: { fontFamily: fonts.medium, fontSize: 13, color: colors.text },
-  seatsCap: { fontFamily: fonts.regular, fontSize: 12, color: colors.textFaint },
+  dateDay: { fontFamily: fonts.semibold, fontSize: 20, lineHeight: 24, color: colors.primary },
+  dateMonth: { fontFamily: fonts.medium, fontSize: 12, lineHeight: 14, color: colors.primary },
+  body: { padding: spacing.lg, gap: 4 },
+  title: { fontFamily: fonts.display, fontSize: 20, lineHeight: 26, color: colors.text, marginTop: 2 },
+  meta: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 20, color: colors.textMuted },
+  bottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginTop: spacing.sm },
+  price: { fontFamily: fonts.semibold, fontSize: 15, color: colors.text },
+  seats: { fontFamily: fonts.regular, fontSize: 14, color: colors.textMuted },
+  seatsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  seatsText: { fontFamily: fonts.semibold, fontSize: 14, color: colors.text },
+  seatsCap: { fontFamily: fonts.regular, fontSize: 13, color: colors.textMuted },
 });
