@@ -17,6 +17,27 @@ type Ctx = {
 
 const AdminAuthContext = createContext<Ctx | null>(null);
 
+/** Message clair selon la cause réelle de l'échec de connexion. */
+function signInMessage(error: { code?: string; message?: string; status?: number }): string {
+  if (__DEV__) console.warn('[Auth]', JSON.stringify({ code: error.code, status: error.status, message: error.message }));
+  switch (error.code) {
+    case 'invalid_credentials':
+      return 'E-mail ou mot de passe incorrect.';
+    case 'email_not_confirmed':
+      return 'Ce compte n’est pas encore confirmé. Dans Supabase : Authentication › Users › le compte › Confirm user.';
+    case 'email_provider_disabled':
+      return 'La connexion par e-mail est désactivée dans Supabase (Authentication › Sign In / Providers › Email).';
+    case 'user_banned':
+      return 'Ce compte est bloqué.';
+    case 'over_request_rate_limit':
+      return 'Trop de tentatives. Réessayez dans quelques minutes.';
+  }
+  if (!error.status || /fetch|network/i.test(error.message ?? '')) {
+    return 'Impossible de joindre le serveur. Vérifiez la connexion internet.';
+  }
+  return `Connexion impossible : ${error.message ?? 'erreur inconnue'}`;
+}
+
 export function AdminAuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [admin, setAdmin] = useState(false);
@@ -49,7 +70,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = useCallback(async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-    if (error) throw new Error('Identifiants incorrects.');
+    if (error) throw new Error(signInMessage(error));
     const ok = await isAdmin().catch(() => false);
     if (!ok) {
       await supabase.auth.signOut();
