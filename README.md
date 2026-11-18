@@ -108,6 +108,26 @@ Les notifications push et le scanner nécessitent un **development build** (`npx
 et un `extra.eas.projectId` dans `app.json` (créé par `eas init`). Identifiant d'application provisoire :
 `fr.randopleinelune.app` (à confirmer avant publication).
 
+## Faire tester l'application (sans PC)
+
+Configuration EAS : `mobile/eas.json` (projet Expo `08d91eae-80ed-4dd5-a3b3-0b1f4bbe12dc`) et action GitHub
+[`.github/workflows/expo-preview.yml`](.github/workflows/expo-preview.yml).
+
+**Une seule fois, depuis un navigateur :**
+
+1. expo.dev › Account settings › Access tokens : créer un jeton, puis l'ajouter dans GitHub
+   (dépôt › Settings › Secrets and variables › Actions › New repository secret) sous le nom `EXPO_TOKEN`.
+2. expo.dev › projet › Environment variables : créer `EXPO_PUBLIC_SUPABASE_URL` et
+   `EXPO_PUBLIC_SUPABASE_ANON_KEY` pour l'environnement **preview** (visibilité « Plain text » : valeurs publiques).
+
+**Ensuite :**
+
+- **Expo Go** : chaque push sur `main` publie une mise à jour (canal `preview`). Sur expo.dev › projet ›
+  Updates, ouvrir la dernière mise à jour : son QR code s'ouvre dans Expo Go, PC éteint.
+- **APK Android** : GitHub › Actions › « Version de test » › Run workflow, cocher « Compiler aussi l'APK ».
+  Le lien d'installation apparaît sur expo.dev › projet › Builds (15 à 30 min).
+- **iPhone (TestFlight)** : nécessite un compte développeur Apple (99 $/an), à configurer plus tard.
+
 ## Tests
 
 ```bash

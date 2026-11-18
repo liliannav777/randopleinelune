@@ -1,0 +1,68 @@
+# Version de test de l'application, sans PC :
+#  - à chaque push sur main touchant mobile/ : publication sur EAS Update (canal « preview »),
+#    ouverte par les testeurs dans Expo Go via le QR code de expo.dev ;
+#  - à la demande (onglet Actions > « Version de test » > Run workflow) : compilation d'un APK
+#    Android installable, en plus de la publication.
+# Prérequis : secret GitHub EXPO_TOKEN ; variables EXPO_PUBLIC_SUPABASE_URL et
+# EXPO_PUBLIC_SUPABASE_ANON_KEY dans l'environnement « preview » du projet sur expo.dev.
+name: Version de test
+
+on:
+  push:
+    branches: [main]
+    paths: ['mobile/**', '.github/workflows/expo-preview.yml']
+  workflow_dispatch:
+    inputs:
+      android:
+        description: Compiler aussi l'APK Android installable
+        type: boolean
+        default: false
+
+concurrency:
+  group: expo-preview
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Jeton Expo manquant
+        if: ${{ env.EXPO_TOKEN == '' }}
+        run: |
+          echo "::warning::Secret EXPO_TOKEN absent - vérifications seules, pas de publication (voir README)."
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - uses: expo/expo-github-action@v8
+        if: ${{ env.EXPO_TOKEN != '' }}
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - run: npm ci
+
+      - name: Vérifications
+        run: |
+          npx tsc --noEmit
+          npx jest --ci
+
+      - name: Publication (Expo Go / mises à jour)
+        if: ${{ env.EXPO_TOKEN != '' }}
+        env:
+          MESSAGE: ${{ github.event.head_commit.message || 'Publication manuelle' }}
+        run: eas update --channel preview --environment preview --message "$MESSAGE" --non-interactive
+
+      - name: Compilation Android (APK)
+        if: ${{ env.EXPO_TOKEN != '' && github.event_name == 'workflow_dispatch' && inputs.android }}
+        run: eas build --platform android --profile preview --non-interactive --no-wait
