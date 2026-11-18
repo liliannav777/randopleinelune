@@ -122,8 +122,11 @@ Configuration EAS : `mobile/eas.json` (projet Expo `08d91eae-80ed-4dd5-a3b3-0b1f
 
 **Ensuite :**
 
-- **Expo Go** : chaque push sur `main` publie une mise à jour (canal `preview`). Sur expo.dev › projet ›
-  Updates, ouvrir la dernière mise à jour : son QR code s'ouvre dans Expo Go, PC éteint.
+- **Expo Go** : chaque publication (canal `preview`) est disponible via ce QR code permanent, qui ouvre
+  toujours la dernière version dans Expo Go, PC éteint : [`docs/qr-testeurs.png`](docs/qr-testeurs.png)
+  (lien : `exp://u.expo.dev/08d91eae-80ed-4dd5-a3b3-0b1f4bbe12dc?runtime-version=exposdk:54.0.0&channel-name=preview`).
+  Publication manuelle depuis `mobile/` :
+  `npx eas-cli@latest update --channel preview --environment preview --message "…"`.
 - **APK Android** : GitHub › Actions › « Version de test » › Run workflow, cocher « Compiler aussi l'APK ».
   Le lien d'installation apparaît sur expo.dev › projet › Builds (15 à 30 min).
 - **iPhone (TestFlight)** : nécessite un compte développeur Apple (99 $/an), à configurer plus tard.
