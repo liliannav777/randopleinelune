@@ -6,6 +6,11 @@ import { AppState, Platform } from 'react-native';
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL?.trim().replace(/\/(rest|auth|storage|functions)\/v1\/?.*$/, '').replace(/\/+$/, '');
 const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.trim();
 
+/** Faux si la version de l'application a été construite sans l'adresse ou la clé Supabase. */
+export const supabaseConfigured = !!url && /^https:\/\/.+/.test(url) && !!anonKey;
+/** Adresse utilisée (pour l'aide au diagnostic, sans la clé). */
+export const supabaseHost = url ? url.replace(/^https?:\/\//, '') : '(non configurée)';
+
 if (!url || !anonKey) {
   // Rappel au développeur : voir mobile/.env.example
   console.warn('EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY manquants (.env)');

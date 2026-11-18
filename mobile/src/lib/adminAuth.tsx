@@ -1,7 +1,7 @@
 import type { Session } from '@supabase/supabase-js';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { isAdmin } from './api';
-import { supabase } from './supabase';
+import { supabase, supabaseConfigured, supabaseHost } from './supabase';
 
 type Ctx = {
   session: Session | null;
@@ -32,8 +32,11 @@ function signInMessage(error: { code?: string; message?: string; status?: number
     case 'over_request_rate_limit':
       return 'Trop de tentatives. Réessayez dans quelques minutes.';
   }
+  if (!supabaseConfigured) {
+    return 'Cette version de l’application n’a pas l’adresse du serveur (variables Supabase absentes à la publication).';
+  }
   if (!error.status || /fetch|network/i.test(error.message ?? '')) {
-    return 'Impossible de joindre le serveur. Vérifiez la connexion internet.';
+    return `Impossible de joindre le serveur (${supabaseHost}). Vérifiez la connexion internet. Détail : ${error.message ?? 'inconnu'}`;
   }
   return `Connexion impossible : ${error.message ?? 'erreur inconnue'}`;
 }

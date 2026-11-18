@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform } from 'react-native';
 import { Banner, Body, Button, Field, Header, Screen } from '@/components/ui';
+import { supabaseConfigured } from '@/lib/supabase';
 import { useAdminAuth } from '@/lib/adminAuth';
 
 type Mode = 'login' | 'forgot' | 'reset';
@@ -31,6 +32,9 @@ export default function AdminLogin() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Screen header={<Header title="Administration" subtitle="Espace organisateur" onBack={() => router.replace('/')} />}>
+        {!supabaseConfigured ? (
+          <Banner title="Configuration manquante" message="Cette version a été publiée sans les variables EXPO_PUBLIC_SUPABASE_URL et EXPO_PUBLIC_SUPABASE_ANON_KEY : republiez-la après les avoir ajoutées sur expo.dev (environnement preview)." />
+        ) : null}
         {message ? <Banner message={message.text} tone={message.tone} /> : null}
         <Field label="Adresse e-mail" value={email} onChangeText={setEmail} keyboardType="email-address"
           autoCapitalize="none" autoComplete="email" textContentType="username" />

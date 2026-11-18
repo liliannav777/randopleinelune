@@ -9,6 +9,7 @@ import { listUpcomingEvents } from '@/lib/api';
 import { capitalize, formatDate, formatTime } from '@/lib/format';
 import { useMyReservations } from '@/lib/myReservations';
 import { heroPhoto, photoFor } from '@/lib/photos';
+import { supabaseConfigured } from '@/lib/supabase';
 import { useColors, useLightStatusBar, useStyles, useTheme, type ThemePreference } from '@/lib/theme';
 import { useFocusData } from '@/lib/useAsync';
 import { fonts, spacing, type Colors } from '@/theme';
@@ -69,6 +70,9 @@ export default function Home() {
         </Card>
       ) : null}
 
+      {!supabaseConfigured ? (
+        <Banner title="Configuration manquante" message="Cette version de l’application ne connaît pas l’adresse du serveur : les sorties ne peuvent pas s’afficher." />
+      ) : null}
       {error ? <Banner message={error.message} /> : null}
 
       {next ? (
