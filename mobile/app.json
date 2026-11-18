@@ -29,9 +29,6 @@
       },
       "predictiveBackGestureEnabled": false
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
     "plugins": [
       "expo-router",
       "expo-secure-store",
@@ -82,6 +79,10 @@
     },
     "runtimeVersion": {
       "policy": "sdkVersion"
-    }
+    },
+    "platforms": [
+      "ios",
+      "android"
+    ]
   }
 }
