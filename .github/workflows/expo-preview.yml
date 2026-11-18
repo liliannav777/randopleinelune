@@ -44,12 +44,6 @@ jobs:
           cache: npm
           cache-dependency-path: mobile/package-lock.json
 
-      - uses: expo/expo-github-action@v8
-        if: ${{ env.EXPO_TOKEN != '' }}
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-
       - run: npm ci
 
       - name: Vérifications
@@ -61,8 +55,8 @@ jobs:
         if: ${{ env.EXPO_TOKEN != '' }}
         env:
           MESSAGE: ${{ github.event.head_commit.message || 'Publication manuelle' }}
-        run: eas update --channel preview --environment preview --message "$MESSAGE" --non-interactive
+        run: npx --yes eas-cli@latest update --channel preview --environment preview --message "$MESSAGE" --non-interactive
 
       - name: Compilation Android (APK)
         if: ${{ env.EXPO_TOKEN != '' && github.event_name == 'workflow_dispatch' && inputs.android }}
-        run: eas build --platform android --profile preview --non-interactive --no-wait
+        run: npx --yes eas-cli@latest build --platform android --profile preview --non-interactive --no-wait
